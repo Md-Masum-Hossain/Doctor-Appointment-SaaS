@@ -8,9 +8,9 @@ function HomePage() {
       transition={{ duration: 0.35, ease: 'easeOut' }}
       className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
-      <h2 className="mb-2 text-2xl font-semibold text-text">Project Foundation Ready</h2>
+      <h2 className="mb-2 text-2xl font-semibold text-text">Authentication Layer Ready</h2>
       <p className="text-slate-600">
-        Frontend routing, query provider, Axios client, and Zustand stores are configured.
+        Role-based authentication is now integrated with secure refresh-cookie sessions.
       </p>
     </motion.section>
   )

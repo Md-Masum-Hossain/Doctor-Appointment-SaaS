@@ -7,12 +7,35 @@ export const notFoundHandler = (req, res) => {
 }
 
 export const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500
+  let statusCode = err.statusCode || 500
+  let message = err.message || 'Internal server error'
 
-  res.status(statusCode).json({
+  if (err.name === 'ValidationError') {
+    statusCode = 400
+  }
+
+  if (err.name === 'CastError') {
+    statusCode = 400
+    message = 'Invalid resource identifier'
+  }
+
+  if (err.code === 11000) {
+    statusCode = 409
+    const duplicateField = Object.keys(err.keyValue || {})[0]
+    message = duplicateField
+      ? `${duplicateField} already exists`
+      : 'Duplicate resource'
+  }
+
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    statusCode = 401
+    message = 'Invalid or expired token'
+  }
+
+  return res.status(statusCode).json({
     success: false,
     statusCode,
-    message: err.message || 'Internal server error',
+    message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   })
 }
