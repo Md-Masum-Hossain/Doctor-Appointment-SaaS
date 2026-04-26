@@ -3,6 +3,9 @@ import MainLayout from '../components/layout/MainLayout'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import RoleBasedRoute from '../components/common/RoleBasedRoute'
 import HomePage from '../pages/HomePage'
+import AboutPage from '../pages/AboutPage'
+import ContactPage from '../pages/ContactPage'
+import DoctorsPage from '../pages/DoctorsPage'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
 import PatientDashboardPage from '../pages/PatientDashboardPage'
@@ -26,6 +29,9 @@ function AppRouter() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/doctors" element={<DoctorsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

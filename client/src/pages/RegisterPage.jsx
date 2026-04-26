@@ -39,7 +39,7 @@ function RegisterPage() {
   return (
     <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="mb-1 text-2xl font-semibold text-text">Create account</h2>
-      <p className="mb-6 text-sm text-slate-600">Start using your Doctor Appointment workspace.</p>
+      <p className="mb-6 text-sm text-slate-600">Start using your Docvexa workspace.</p>
 
       <form className="space-y-4" onSubmit={onSubmit}>
         <div>
