@@ -3,6 +3,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import healthRouter from './modules/health/health.route.js'
 import authRouter from './modules/auth/auth.route.js'
+import doctorRouter from './modules/doctor/doctor.route.js'
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
 
 const app = express()
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/doctors', doctorRouter)
 app.use('/api/v1', healthRouter)
 
 app.use(notFoundHandler)
