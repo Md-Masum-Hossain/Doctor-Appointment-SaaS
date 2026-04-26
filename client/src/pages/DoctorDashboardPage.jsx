@@ -9,6 +9,9 @@ function DoctorDashboardPage() {
       <Link to="/doctor/profile" className="mt-4 inline-block">
         <Button>Setup / Edit profile</Button>
       </Link>
+      <Link to="/doctor/appointments" className="mt-4 inline-block ml-3">
+        <Button variant="ghost">View appointments</Button>
+      </Link>
     </section>
   )
 }
