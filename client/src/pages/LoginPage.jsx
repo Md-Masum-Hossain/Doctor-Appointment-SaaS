@@ -6,7 +6,7 @@ import { getDashboardPathByRole } from '../utils/roleRedirect'
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, isLoading, error, isAuthenticated, user, clearError } = useAuthStore()
+  const { login, isLoading, error, fieldErrors, isAuthenticated, user, clearError } = useAuthStore()
 
   const [form, setForm] = useState({
     email: '',
@@ -56,6 +56,7 @@ function LoginPage() {
             required
             className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-primary"
           />
+          {fieldErrors.email && <p className="mt-1 text-xs text-error">{fieldErrors.email}</p>}
         </div>
 
         <div>
@@ -72,9 +73,12 @@ function LoginPage() {
             required
             className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-primary"
           />
+          {fieldErrors.password && <p className="mt-1 text-xs text-error">{fieldErrors.password}</p>}
         </div>
 
-        {error ? <p className="text-sm text-error">{error}</p> : null}
+        {error && Object.keys(fieldErrors).length === 0 && (
+          <p className="text-sm text-error">{error}</p>
+        )}
 
         <button
           type="submit"

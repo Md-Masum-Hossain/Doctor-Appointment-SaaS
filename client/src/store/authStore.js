@@ -9,6 +9,18 @@ import {
 const getErrorMessage = (error) =>
   error?.response?.data?.message || error?.message || 'Request failed'
 
+const getFieldErrors = (error) => {
+  const errors = error?.response?.data?.errors
+  if (!Array.isArray(errors)) return {}
+
+  return errors.reduce((acc, err) => {
+    // Extract field name from path (e.g., "body.password" -> "password")
+    const fieldName = err.path.split('.').pop()
+    acc[fieldName] = err.message
+    return acc
+  }, {})
+}
+
 const useAuthStore = create((set) => ({
   user: null,
   accessToken: null,
@@ -16,6 +28,7 @@ const useAuthStore = create((set) => ({
   isLoading: false,
   isInitialized: false,
   error: null,
+  fieldErrors: {},
   setUser: (user, accessToken = null) => {
     setAccessToken(accessToken)
     set({
@@ -23,9 +36,10 @@ const useAuthStore = create((set) => ({
       accessToken,
       isAuthenticated: Boolean(user),
       error: null,
+      fieldErrors: {},
     })
   },
-  clearError: () => set({ error: null }),
+  clearError: () => set({ error: null, fieldErrors: {} }),
   clearAuth: () => {
     clearAccessToken()
     set({
@@ -36,7 +50,7 @@ const useAuthStore = create((set) => ({
     })
   },
   register: async (payload) => {
-    set({ isLoading: true, error: null })
+    set({ isLoading: true, error: null, fieldErrors: {} })
 
     try {
       const data = await authService.register(payload)
@@ -51,12 +65,17 @@ const useAuthStore = create((set) => ({
 
       return data.user
     } catch (error) {
-      set({ error: getErrorMessage(error), isLoading: false })
+      const fieldErrors = getFieldErrors(error)
+      set({ 
+        error: getErrorMessage(error), 
+        fieldErrors,
+        isLoading: false 
+      })
       return null
     }
   },
   login: async (payload) => {
-    set({ isLoading: true, error: null })
+    set({ isLoading: true, error: null, fieldErrors: {} })
 
     try {
       const data = await authService.login(payload)
@@ -71,7 +90,12 @@ const useAuthStore = create((set) => ({
 
       return data.user
     } catch (error) {
-      set({ error: getErrorMessage(error), isLoading: false })
+      const fieldErrors = getFieldErrors(error)
+      set({ 
+        error: getErrorMessage(error), 
+        fieldErrors,
+        isLoading: false 
+      })
       return null
     }
   },

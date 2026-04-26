@@ -1,8 +1,12 @@
 import dotenv from 'dotenv'
-import app from './app.js'
-import { connectDatabase } from './config/db.js'
 
+// Load environment variables as early as possible so other modules
+// (like `app.js`) can read `process.env` during initialization.
 dotenv.config()
+
+import { connectDatabase } from './config/db.js'
+// Import `app` dynamically to ensure `.env` is loaded first.
+const { default: app } = await import('./app.js')
 
 const PORT = process.env.PORT || 5000
 

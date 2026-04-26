@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const roleEnum = z.enum(['patient', 'doctor', 'admin'])
+const registrationRoleEnum = z.enum(['patient', 'doctor'])
 
 export const registerSchema = z.object({
   body: z.object({
@@ -8,7 +9,7 @@ export const registerSchema = z.object({
     email: z.email(),
     password: z.string().min(6).max(100),
     phone: z.string().trim().min(5).max(30),
-    role: roleEnum.optional(),
+    role: registrationRoleEnum.optional(),
     avatar: z.url().optional().or(z.literal('')),
   }),
 })
