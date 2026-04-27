@@ -29,7 +29,7 @@ function DoctorDetailsPage() {
     }
 
     return data.availableSlots.map((slot) => `${slot.startTime} - ${slot.endTime}`).join(', ')
-  }, [data?.availableSlots])
+  }, [data])
 
   const handleBookingChange = (event) => {
     const { name, value } = event.target
