@@ -1,6 +1,23 @@
 import { ApiResponse } from '../../utils/ApiResponse.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 import { doctorService } from './doctor.service.js'
+import { uploadToCloudinary } from '../../utils/cloudinary.js'
+import { AppError } from '../../utils/AppError.js'
+
+const uploadDoctorPhoto = async (req, payload) => {
+  if (!req.uploadedFile) return
+
+  const cloudinaryResult = await uploadToCloudinary(
+    req.uploadedFile.buffer,
+    req.uploadedFile.fileName,
+  )
+
+  if (!cloudinaryResult?.url) {
+    throw new AppError('Doctor photo upload failed', 400)
+  }
+
+  payload.photoUrl = cloudinaryResult.url
+}
 
 export const getDoctors = asyncHandler(async (req, res) => {
   const query = req.validated?.query || req.query
@@ -18,13 +35,19 @@ export const getDoctorById = asyncHandler(async (req, res) => {
 
 export const createDoctorProfile = asyncHandler(async (req, res) => {
   const payload = req.validated?.body || req.body
+
+  await uploadDoctorPhoto(req, payload)
+
   const doctorProfile = await doctorService.createDoctorProfile(req.user._id, payload)
 
   res.status(201).json(new ApiResponse(201, 'Doctor profile created successfully', doctorProfile))
 })
 
 export const updateDoctorProfile = asyncHandler(async (req, res) => {
-  const payload = req.validated?.body || req.body
+  let payload = req.validated?.body || req.body
+
+  await uploadDoctorPhoto(req, payload)
+
   const doctorProfile = await doctorService.updateDoctorProfile(req.user._id, payload)
 
   res.status(200).json(new ApiResponse(200, 'Doctor profile updated successfully', doctorProfile))

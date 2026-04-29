@@ -12,8 +12,29 @@ function DoctorCard({ doctor }) {
     <motion.article
       whileHover={{ y: -6, scale: 1.01 }}
       transition={{ type: 'spring', stiffness: 240, damping: 18 }}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm overflow-hidden"
     >
+      {/* Doctor Photo */}
+      {doctor.photoUrl ? (
+        <div className="mb-4 h-40 w-full overflow-hidden rounded-xl bg-slate-100">
+          <img
+            src={doctor.photoUrl}
+            alt={doctor.user?.name || 'Doctor'}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="mb-4 h-40 w-full rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+          <svg
+            className="h-16 w-16 text-blue-300"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <Badge>{doctor.specialization}</Badge>
         {doctor.isVerified ? (

@@ -25,6 +25,7 @@ const doctorProfilePayloadSchema = z.object({
   chamberAddress: z.string().trim().max(350).default(''),
   availableDays: z.array(dayEnum).default([]),
   availableSlots: z.array(slotSchema).default([]),
+  photoUrl: z.string().trim().url('Invalid photo URL').optional().default(''),
 })
 
 export const createDoctorProfileSchema = z.object({

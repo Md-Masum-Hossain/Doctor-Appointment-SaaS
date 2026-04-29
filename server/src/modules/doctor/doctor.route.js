@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { protect, authorizeRoles } from '../../middlewares/auth.middleware.js'
 import { validateRequest } from '../../middlewares/validateRequest.js'
+import { validateFileUpload } from '../../utils/fileUpload.js'
 import {
   createDoctorProfile,
   getDoctorById,
@@ -25,6 +26,7 @@ doctorRouter.post(
   '/profile',
   protect,
   authorizeRoles('doctor'),
+  validateFileUpload('photo'),
   validateRequest(createDoctorProfileSchema),
   createDoctorProfile,
 )
@@ -33,6 +35,7 @@ doctorRouter.patch(
   '/profile',
   protect,
   authorizeRoles('doctor'),
+  validateFileUpload('photo'),
   validateRequest(updateDoctorProfileSchema),
   updateDoctorProfile,
 )

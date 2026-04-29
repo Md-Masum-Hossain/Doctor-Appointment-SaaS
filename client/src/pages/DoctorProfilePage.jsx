@@ -43,6 +43,9 @@ function DoctorProfilePage() {
   const [mode, setMode] = useState('create')
   const [message, setMessage] = useState('')
   const [errorText, setErrorText] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const { user } = useAuthStore()
   const createMutation = useCreateDoctorProfileMutation()
@@ -70,21 +73,83 @@ function DoctorProfilePage() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorText('Please upload a JPEG, PNG, or WebP image')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorText('Image size must be less than 5MB')
+      return
+    }
+
+    setPhotoFile(file)
+    setErrorText('')
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPhotoPreview(e.target?.result || '')
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setMessage('')
     setErrorText('')
+    setFieldErrors({})
 
     try {
+      let submitPayload = payload
+
+      // If photo file is selected, create FormData
+      if (photoFile) {
+        const formData = new FormData()
+        // Add all form fields to FormData
+        Object.entries(payload).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value))
+          } else {
+            formData.append(key, value)
+          }
+        })
+        // Add photo file
+        formData.append('photo', photoFile)
+        submitPayload = formData
+      }
+
       if (mode === 'create') {
-        await createMutation.mutateAsync(payload)
+        await createMutation.mutateAsync(submitPayload)
         setMessage('Doctor profile created successfully.')
       } else {
-        await updateMutation.mutateAsync(payload)
+        await updateMutation.mutateAsync(submitPayload)
         setMessage('Doctor profile updated successfully.')
       }
+
+      // Clear photo after successful submission
+      setPhotoFile(null)
+      setPhotoPreview('')
+      setFieldErrors({})
     } catch (error) {
-      setErrorText(error?.response?.data?.message || 'Profile operation failed.')
+      const errors = error?.response?.data?.errors
+      if (Array.isArray(errors)) {
+        const map = errors.reduce((acc, err) => {
+          const field = String(err.path || '').split('.').pop()
+          if (field) acc[field] = err.message
+          return acc
+        }, {})
+        setFieldErrors(map)
+        setErrorText(error?.response?.data?.message || '')
+      } else {
+        setErrorText(error?.response?.data?.message || 'Profile operation failed.')
+      }
     }
   }
 
@@ -112,6 +177,26 @@ function DoctorProfilePage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {/* Photo Upload Section */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <label className="block text-sm">
+                <span className="mb-1.5 block font-medium text-slate-700">Doctor Photo</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-primary"
+                />
+                <p className="mt-1 text-xs text-slate-500">Accepted formats: JPEG, PNG, WebP (max 5MB)</p>
+              </label>
+
+              {photoPreview && (
+                <div className="mt-3 h-40 w-full overflow-hidden rounded-lg bg-slate-200">
+                  <img src={photoPreview} alt="Photo preview" className="h-full w-full object-cover" />
+                </div>
+              )}
+            </div>
+
             <Input
               name="specialization"
               label="Specialization"
@@ -120,6 +205,7 @@ function DoctorProfilePage() {
               required
               placeholder="Cardiology"
             />
+            {fieldErrors.specialization && <p className="mt-1 text-xs text-rose-600">{fieldErrors.specialization}</p>}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
@@ -129,6 +215,7 @@ function DoctorProfilePage() {
                 value={form.experienceYears}
                 onChange={handleChange}
               />
+              {fieldErrors.experienceYears && <p className="mt-1 text-xs text-rose-600">{fieldErrors.experienceYears}</p>}
               <Input
                 name="consultationFee"
                 label="Consultation fee"
@@ -136,6 +223,7 @@ function DoctorProfilePage() {
                 value={form.consultationFee}
                 onChange={handleChange}
               />
+              {fieldErrors.consultationFee && <p className="mt-1 text-xs text-rose-600">{fieldErrors.consultationFee}</p>}
             </div>
 
             <Input
@@ -145,6 +233,7 @@ function DoctorProfilePage() {
               onChange={handleChange}
               placeholder="Square Hospital"
             />
+            {fieldErrors.hospitalName && <p className="mt-1 text-xs text-rose-600">{fieldErrors.hospitalName}</p>}
             <Input
               name="chamberAddress"
               label="Chamber address"
@@ -152,6 +241,7 @@ function DoctorProfilePage() {
               onChange={handleChange}
               placeholder="House 10, Road 12, Dhanmondi"
             />
+            {fieldErrors.chamberAddress && <p className="mt-1 text-xs text-rose-600">{fieldErrors.chamberAddress}</p>}
             <Input
               name="qualifications"
               label="Qualifications (comma separated)"
@@ -159,6 +249,7 @@ function DoctorProfilePage() {
               onChange={handleChange}
               placeholder="MBBS, FCPS"
             />
+            {fieldErrors.qualifications && <p className="mt-1 text-xs text-rose-600">{fieldErrors.qualifications}</p>}
             <Input
               name="availableDays"
               label="Available days (comma separated full day names)"
@@ -166,6 +257,7 @@ function DoctorProfilePage() {
               onChange={handleChange}
               placeholder="Sunday, Tuesday, Thursday"
             />
+            {fieldErrors.availableDays && <p className="mt-1 text-xs text-rose-600">{fieldErrors.availableDays}</p>}
             <Input
               name="availableSlots"
               label="Available slots (comma separated, e.g. 09:00-11:00, 18:00-20:00)"
@@ -173,6 +265,7 @@ function DoctorProfilePage() {
               onChange={handleChange}
               placeholder="09:00-11:00, 18:00-20:00"
             />
+            {fieldErrors.availableSlots && <p className="mt-1 text-xs text-rose-600">{fieldErrors.availableSlots}</p>}
 
             <label className="block text-sm">
               <span className="mb-1.5 block font-medium text-slate-700">Bio</span>
@@ -185,6 +278,7 @@ function DoctorProfilePage() {
                 placeholder="Introduce your background and consultation approach"
               />
             </label>
+            {fieldErrors.bio && <p className="mt-1 text-xs text-rose-600">{fieldErrors.bio}</p>}
 
             {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
             {errorText ? <p className="text-sm text-rose-600">{errorText}</p> : null}
