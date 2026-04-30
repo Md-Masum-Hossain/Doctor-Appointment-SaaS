@@ -6,6 +6,7 @@ import healthRouter from './modules/health/health.route.js'
 import authRouter from './modules/auth/auth.route.js'
 import doctorRouter from './modules/doctor/doctor.route.js'
 import appointmentRouter from './modules/appointment/appointment.route.js'
+import userRouter from './modules/user/user.route.js'
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
 import { validateFileUpload } from './utils/fileUpload.js'
 
@@ -32,6 +33,7 @@ app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })) // 5MB limit
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/doctors', doctorRouter)
 app.use('/api/v1/appointments', appointmentRouter)
+app.use('/api/v1/users', userRouter)
 app.use('/api/v1', healthRouter)
 
 app.use(notFoundHandler)

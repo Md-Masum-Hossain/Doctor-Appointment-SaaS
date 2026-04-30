@@ -26,6 +26,12 @@ export const getDoctors = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Doctors fetched successfully', result))
 })
 
+export const getMyDoctorProfile = asyncHandler(async (req, res) => {
+  const doctorProfile = await doctorService.getMyDoctorProfile(req.user._id)
+
+  res.status(200).json(new ApiResponse(200, 'Doctor profile fetched successfully', doctorProfile))
+})
+
 export const getDoctorById = asyncHandler(async (req, res) => {
   const { id } = req.validated?.params || req.params
   const doctorProfile = await doctorService.getDoctorById(id)

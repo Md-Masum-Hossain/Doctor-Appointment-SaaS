@@ -98,6 +98,10 @@ export const doctorService = {
     }
   },
 
+  async getMyDoctorProfile(userId) {
+    return DoctorProfile.findOne({ user: userId }).populate(doctorPopulate).lean()
+  },
+
   async getDoctorById(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError('Invalid doctor profile id', 400)
