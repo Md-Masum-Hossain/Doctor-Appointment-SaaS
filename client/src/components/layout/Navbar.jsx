@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Button from '../ui/Button'
 import Container from '../ui/Container'
+import BrandMark from '../common/BrandMark'
 import useAuthStore from '../../store/authStore'
 import { getDashboardPathByRole } from '../../utils/roleRedirect'
 
@@ -32,9 +33,7 @@ function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
       <Container className="py-3">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold tracking-tight text-primary">
-            Docvexa
-          </Link>
+          <BrandMark to="/" size="sm" variant="logo" />
 
           <nav className="hidden items-center gap-6 md:flex">
             {links.map((item) => (

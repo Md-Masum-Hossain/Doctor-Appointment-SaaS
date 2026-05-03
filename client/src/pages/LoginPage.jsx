@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import { getDashboardPathByRole } from '../utils/roleRedirect'
+import BrandMark from '../components/common/BrandMark'
 
 function LoginPage() {
   const navigate = useNavigate()
@@ -38,6 +39,9 @@ function LoginPage() {
 
   return (
     <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex justify-center">
+        <BrandMark to="/" size="md" variant="logo" />
+      </div>
       <h2 className="mb-1 text-2xl font-semibold text-text">Welcome back</h2>
       <p className="mb-6 text-sm text-slate-600">Log in to your account.</p>
 

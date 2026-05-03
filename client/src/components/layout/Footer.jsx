@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Container from '../ui/Container'
+import BrandMark from '../common/BrandMark'
 
 function Footer() {
   return (
@@ -7,7 +8,7 @@ function Footer() {
       <Container className="py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="text-lg font-bold text-primary">Docvexa</h3>
+            <BrandMark to="/" size="sm" variant="text" subtitle="Healthcare SaaS" />
             <p className="mt-2 text-sm text-slate-600">
               Premium healthcare SaaS for smoother appointments and better care coordination.
             </p>
