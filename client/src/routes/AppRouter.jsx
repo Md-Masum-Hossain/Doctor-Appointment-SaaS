@@ -14,6 +14,7 @@ import DoctorDashboardPage from '../pages/DoctorDashboardPage'
 import AdminDashboardPage from '../pages/AdminDashboardPage'
 import DoctorProfilePage from '../pages/DoctorProfilePage'
 import AdminDoctorVerificationPage from '../pages/AdminDoctorVerificationPage'
+import AdminUsersPage from '../pages/AdminUsersPage'
 import PatientAppointmentsPage from '../pages/PatientAppointmentsPage'
 import DoctorAppointmentsPage from '../pages/DoctorAppointmentsPage'
 import AdminAppointmentsPage from '../pages/AdminAppointmentsPage'
@@ -59,6 +60,7 @@ function AppRouter() {
           <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/doctors/verify" element={<AdminDoctorVerificationPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/appointments" element={<AdminAppointmentsPage />} />
           </Route>
         </Route>

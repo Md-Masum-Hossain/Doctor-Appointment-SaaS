@@ -91,11 +91,11 @@ function DoctorDetailsPage() {
         >
           {/* Doctor Photo */}
           {data.photoUrl ? (
-            <div className="mb-6 h-64 w-full overflow-hidden rounded-xl bg-slate-100">
+            <div className="mb-6 flex min-h-64 w-full items-center justify-center rounded-xl bg-slate-100 p-3">
               <img
                 src={data.photoUrl}
                 alt={data.user?.name || 'Doctor'}
-                className="h-full w-full object-cover"
+                className="max-h-96 w-auto max-w-full object-contain"
               />
             </div>
           ) : (

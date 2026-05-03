@@ -5,6 +5,7 @@ export const doctorQueryKeys = {
   all: ['doctors'],
   list: (filters) => ['doctors', 'list', filters],
   detail: (id) => ['doctors', 'detail', id],
+  myProfile: ['doctors', 'me', 'profile'],
 }
 
 export const useDoctorsQuery = (filters) =>
@@ -21,6 +22,12 @@ export const useDoctorDetailsQuery = (id) =>
     enabled: Boolean(id),
   })
 
+export const useMyDoctorProfileQuery = () =>
+  useQuery({
+    queryKey: doctorQueryKeys.myProfile,
+    queryFn: doctorService.getMyProfile,
+  })
+
 export const useCreateDoctorProfileMutation = () => {
   const queryClient = useQueryClient()
 
@@ -28,6 +35,7 @@ export const useCreateDoctorProfileMutation = () => {
     mutationFn: doctorService.createProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: doctorQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: doctorQueryKeys.myProfile })
     },
   })
 }
@@ -39,6 +47,7 @@ export const useUpdateDoctorProfileMutation = () => {
     mutationFn: doctorService.updateProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: doctorQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: doctorQueryKeys.myProfile })
     },
   })
 }

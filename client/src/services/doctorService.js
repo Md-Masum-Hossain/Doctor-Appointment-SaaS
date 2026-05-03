@@ -18,6 +18,7 @@ const toQueryString = (params = {}) => {
 export const doctorService = {
   getDoctors: (params) => apiClient.get(`/doctors${toQueryString(params)}`).then(unwrap),
   getDoctorById: (id) => apiClient.get(`/doctors/${id}`).then(unwrap),
+  getMyProfile: () => apiClient.get('/doctors/profile').then(unwrap),
   createProfile: (payload) => {
     // If payload is FormData (contains photo), send multipart/form-data
     if (payload instanceof FormData) {

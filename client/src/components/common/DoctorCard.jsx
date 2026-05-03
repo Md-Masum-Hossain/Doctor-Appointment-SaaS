@@ -16,11 +16,11 @@ function DoctorCard({ doctor }) {
     >
       {/* Doctor Photo */}
       {doctor.photoUrl ? (
-        <div className="mb-4 h-40 w-full overflow-hidden rounded-xl bg-slate-100">
+        <div className="mb-4 flex min-h-40 w-full items-center justify-center rounded-xl bg-slate-100 p-2">
           <img
             src={doctor.photoUrl}
             alt={doctor.user?.name || 'Doctor'}
-            className="h-full w-full object-cover"
+            className="max-h-56 w-auto max-w-full object-contain"
           />
         </div>
       ) : (

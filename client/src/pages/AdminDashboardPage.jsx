@@ -12,6 +12,7 @@ import { useDoctorsQuery } from '../hooks/useDoctorsQuery'
 const adminNavigation = [
   { to: '/admin/dashboard', label: 'Overview' },
   { to: '/admin/doctors/verify', label: 'Doctor verification' },
+  { to: '/admin/users', label: 'User management' },
   { to: '/admin/appointments', label: 'Appointments' },
 ]
 
@@ -153,6 +154,9 @@ function AdminDashboardPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link to="/admin/doctors/verify">
                   <Button>Verify profiles</Button>
+                </Link>
+                <Link to="/admin/users">
+                  <Button variant="ghost">Manage users</Button>
                 </Link>
                 <Link to="/admin/appointments">
                   <Button variant="ghost">Manage appointments</Button>

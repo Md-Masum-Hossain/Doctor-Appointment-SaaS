@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Container from '../components/ui/Container'
 import Button from '../components/ui/Button'
@@ -6,6 +6,7 @@ import Input from '../components/ui/Input'
 import useAuthStore from '../store/authStore'
 import {
   useCreateDoctorProfileMutation,
+  useMyDoctorProfileQuery,
   useUpdateDoctorProfileMutation,
 } from '../hooks/useDoctorsQuery'
 
@@ -38,9 +39,22 @@ const parseSlots = (value) =>
     })
     .filter((slot) => slot.startTime && slot.endTime)
 
+const profileToForm = (profile) => ({
+  specialization: profile?.specialization || '',
+  qualifications: profile?.qualifications?.join(', ') || '',
+  experienceYears: profile?.experienceYears ?? 0,
+  consultationFee: profile?.consultationFee ?? 0,
+  bio: profile?.bio || '',
+  hospitalName: profile?.hospitalName || '',
+  chamberAddress: profile?.chamberAddress || '',
+  availableDays: profile?.availableDays?.join(', ') || '',
+  availableSlots: profile?.availableSlots?.length
+    ? profile.availableSlots.map((slot) => `${slot.startTime}-${slot.endTime}`).join(', ')
+    : '',
+})
+
 function DoctorProfilePage() {
   const [form, setForm] = useState(initialForm)
-  const [mode, setMode] = useState('create')
   const [message, setMessage] = useState('')
   const [errorText, setErrorText] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
@@ -48,10 +62,20 @@ function DoctorProfilePage() {
   const [fieldErrors, setFieldErrors] = useState({})
 
   const { user } = useAuthStore()
+  const { data: doctorProfile, isLoading: isProfileLoading, isError: isProfileError, error: profileError } = useMyDoctorProfileQuery()
   const createMutation = useCreateDoctorProfileMutation()
   const updateMutation = useUpdateDoctorProfileMutation()
 
+  const hasProfile = Boolean(doctorProfile)
   const isSubmitting = createMutation.isPending || updateMutation.isPending
+  const submitMutation = hasProfile ? updateMutation : createMutation
+
+  useEffect(() => {
+    setForm(profileToForm(doctorProfile))
+    setPhotoPreview(doctorProfile?.photoUrl || '')
+    setPhotoFile(null)
+    setFieldErrors({})
+  }, [doctorProfile])
 
   const payload = useMemo(
     () => ({
@@ -125,17 +149,11 @@ function DoctorProfilePage() {
         submitPayload = formData
       }
 
-      if (mode === 'create') {
-        await createMutation.mutateAsync(submitPayload)
-        setMessage('Doctor profile created successfully.')
-      } else {
-        await updateMutation.mutateAsync(submitPayload)
-        setMessage('Doctor profile updated successfully.')
-      }
+      await submitMutation.mutateAsync(submitPayload)
+      setMessage(hasProfile ? 'Doctor profile updated successfully.' : 'Doctor profile created successfully.')
 
       // Clear photo after successful submission
       setPhotoFile(null)
-      setPhotoPreview('')
       setFieldErrors({})
     } catch (error) {
       const errors = error?.response?.data?.errors
@@ -164,17 +182,15 @@ function DoctorProfilePage() {
         >
           <h1 className="text-2xl font-bold text-text">Doctor Profile Setup / Edit</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Logged in as {user?.name}. Use create mode for first setup, then switch to update mode for edits.
+            Logged in as {user?.name}. {hasProfile ? 'Your profile is loaded below for editing.' : 'Create your doctor profile to get started.'}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant={mode === 'create' ? 'primary' : 'ghost'} onClick={() => setMode('create')}>
-              Create profile
-            </Button>
-            <Button variant={mode === 'update' ? 'primary' : 'ghost'} onClick={() => setMode('update')}>
-              Update profile
-            </Button>
-          </div>
+          {isProfileLoading ? <p className="mt-4 text-sm text-slate-500">Loading your doctor profile...</p> : null}
+          {isProfileError ? (
+            <p className="mt-4 text-sm text-rose-600">
+              {profileError?.response?.data?.message || 'Could not load your doctor profile.'}
+            </p>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             {/* Photo Upload Section */}
@@ -191,8 +207,8 @@ function DoctorProfilePage() {
               </label>
 
               {photoPreview && (
-                <div className="mt-3 h-40 w-full overflow-hidden rounded-lg bg-slate-200">
-                  <img src={photoPreview} alt="Photo preview" className="h-full w-full object-cover" />
+                <div className="mt-3 flex justify-center rounded-lg bg-slate-200 p-2">
+                  <img src={photoPreview} alt="Photo preview" className="max-h-72 w-auto max-w-full object-contain" />
                 </div>
               )}
             </div>
@@ -283,8 +299,8 @@ function DoctorProfilePage() {
             {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
             {errorText ? <p className="text-sm text-rose-600">{errorText}</p> : null}
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : mode === 'create' ? 'Create doctor profile' : 'Update doctor profile'}
+            <Button type="submit" disabled={isSubmitting || isProfileLoading}>
+              {isSubmitting ? 'Submitting...' : hasProfile ? 'Update doctor profile' : 'Create doctor profile'}
             </Button>
           </form>
         </motion.section>
