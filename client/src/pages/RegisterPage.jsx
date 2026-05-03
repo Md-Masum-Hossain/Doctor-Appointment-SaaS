@@ -14,6 +14,7 @@ function RegisterPage() {
     password: '',
     phone: '',
     role: 'patient',
+    gender: '',
   })
 
   if (isAuthenticated && user) {
@@ -127,6 +128,28 @@ function RegisterPage() {
             <option value="doctor">Doctor</option>
           </select>
         </div>
+
+        {form.role === 'patient' && (
+          <div>
+            <label htmlFor="gender" className="mb-1 block text-sm font-medium text-slate-700">
+              Gender
+            </label>
+            <select
+              id="gender"
+              name="gender"
+              value={form.gender}
+              onChange={onChange}
+              required
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-primary"
+            >
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            {fieldErrors.gender && <p className="mt-1 text-xs text-error">{fieldErrors.gender}</p>}
+          </div>
+        )}
 
         {error && Object.keys(fieldErrors).length === 0 && (
           <p className="text-sm text-error">{error}</p>

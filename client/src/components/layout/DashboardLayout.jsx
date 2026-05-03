@@ -36,7 +36,7 @@ function DashboardLayout({ title, subtitle, navigation, children }) {
       <div className="mx-auto flex w-full max-w-7xl gap-0 px-0 sm:px-4 lg:px-6">
         <aside className="sticky top-[69px] hidden h-[calc(100vh-70px)] w-72 shrink-0 flex-col border-r border-slate-200 bg-white/95 p-5 backdrop-blur lg:flex">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <BrandMark to="/" size="sm" variant="logo" />
+            <BrandMark to="/" size="sm" variant="text" subtitle="Console" />
           </div>
 
           <nav className="mt-6 space-y-1.5">
@@ -142,7 +142,7 @@ function DashboardLayout({ title, subtitle, navigation, children }) {
           />
           <aside className="absolute left-0 top-0 h-full w-72 max-w-[88vw] border-r border-slate-200 bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between">
-              <BrandMark to="/" size="sm" variant="logo" />
+              <BrandMark to="/" size="sm" variant="text" subtitle="Console" />
               <button
                 type="button"
                 className="rounded-lg border border-slate-200 p-2 text-slate-700"
