@@ -10,7 +10,7 @@ function AdminDoctorVerificationPage() {
   const [page, setPage] = useState(1)
   const [selectedDoctor, setSelectedDoctor] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const { data, isLoading } = useDoctorsQuery({ page, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' })
+  const { data, isLoading } = useDoctorsQuery({ page, limit: 10, sortBy: 'createdAt', sortOrder: 'desc', verified: 'false' })
   const verifyMutation = useVerifyDoctorMutation()
   const deleteUserMutation = useDeleteUserMutation()
 
