@@ -40,4 +40,5 @@ function DataTable({ columns, rows, emptyState }) {
   )
 }
 
+export { DataTable }
 export default DataTable

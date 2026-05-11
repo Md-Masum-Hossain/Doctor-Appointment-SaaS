@@ -192,4 +192,5 @@ function DashboardLayout({ title, subtitle, navigation, children }) {
   )
 }
 
+export { DashboardLayout }
 export default DashboardLayout

@@ -20,6 +20,7 @@ export const appointmentService = {
   getMyAppointments: (params) => apiClient.get(`/appointments/my${toQueryString(params)}`).then(unwrap),
   getDoctorAppointments: (params) => apiClient.get(`/appointments/doctor${toQueryString(params)}`).then(unwrap),
   getAdminAppointments: (params) => apiClient.get(`/appointments/admin${toQueryString(params)}`).then(unwrap),
+  getAppointmentById: (id) => apiClient.get(`/appointments/${id}`).then(unwrap),
   updateStatus: (id, payload) => apiClient.patch(`/appointments/${id}/status`, payload).then(unwrap),
   reschedule: (id, payload) => apiClient.patch(`/appointments/${id}/reschedule`, payload).then(unwrap),
   cancel: (id) => apiClient.delete(`/appointments/${id}/cancel`).then(unwrap),

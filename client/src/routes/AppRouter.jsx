@@ -18,6 +18,8 @@ import AdminUsersPage from '../pages/AdminUsersPage'
 import PatientAppointmentsPage from '../pages/PatientAppointmentsPage'
 import DoctorAppointmentsPage from '../pages/DoctorAppointmentsPage'
 import AdminAppointmentsPage from '../pages/AdminAppointmentsPage'
+import PatientPaymentsPage from '../pages/PatientPaymentsPage'
+import AdminPaymentsPage from '../pages/AdminPaymentsPage'
 import useAuthStore from '../store/authStore'
 import { getDashboardPathByRole } from '../utils/roleRedirect'
 
@@ -49,6 +51,7 @@ function AppRouter() {
           <Route element={<RoleBasedRoute allowedRoles={['patient']} />}>
             <Route path="/patient/dashboard" element={<PatientDashboardPage />} />
             <Route path="/patient/appointments" element={<PatientAppointmentsPage />} />
+            <Route path="/patient/payments" element={<PatientPaymentsPage />} />
           </Route>
 
           <Route element={<RoleBasedRoute allowedRoles={['doctor']} />}>
@@ -62,6 +65,7 @@ function AppRouter() {
             <Route path="/admin/doctors/verify" element={<AdminDoctorVerificationPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/appointments" element={<AdminAppointmentsPage />} />
+            <Route path="/admin/payments" element={<AdminPaymentsPage />} />
           </Route>
         </Route>
       </Route>

@@ -17,4 +17,5 @@ function SectionHeader({ eyebrow, title, description, centered = true, className
   )
 }
 
+export { SectionHeader }
 export default SectionHeader

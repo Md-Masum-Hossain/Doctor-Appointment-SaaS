@@ -7,6 +7,7 @@ function Input({
   placeholder,
   type = 'text',
   required = false,
+  disabled = false,
   className = '',
 }) {
   return (
@@ -20,10 +21,12 @@ function Input({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-primary"
+        disabled={disabled}
+        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-primary disabled:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-500"
       />
     </label>
   )
 }
 
+export { Input }
 export default Input

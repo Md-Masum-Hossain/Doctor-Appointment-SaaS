@@ -8,4 +8,5 @@ function EmptyState({ title, description, action }) {
   )
 }
 
+export { EmptyState }
 export default EmptyState

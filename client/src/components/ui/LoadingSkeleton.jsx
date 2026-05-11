@@ -8,4 +8,5 @@ function LoadingSkeleton({ rows = 1, className = '' }) {
   )
 }
 
+export { LoadingSkeleton }
 export default LoadingSkeleton

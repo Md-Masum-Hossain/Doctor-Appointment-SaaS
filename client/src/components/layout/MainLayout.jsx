@@ -14,4 +14,5 @@ function MainLayout() {
   )
 }
 
+export { MainLayout }
 export default MainLayout
