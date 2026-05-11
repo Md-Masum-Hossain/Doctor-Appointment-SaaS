@@ -7,6 +7,7 @@ import {
   getAdminAppointments,
   getDoctorAppointments,
   getMyAppointments,
+  getAppointmentById,
   rescheduleAppointment,
   updateAppointmentStatus,
 } from './appointment.controller.js'
@@ -25,6 +26,7 @@ appointmentRouter.post('/', protect, authorizeRoles('patient'), validateRequest(
 appointmentRouter.get('/my', protect, authorizeRoles('patient'), validateRequest(appointmentListQuerySchema), getMyAppointments)
 appointmentRouter.get('/doctor', protect, authorizeRoles('doctor'), validateRequest(appointmentListQuerySchema), getDoctorAppointments)
 appointmentRouter.get('/admin', protect, authorizeRoles('admin'), validateRequest(appointmentListQuerySchema), getAdminAppointments)
+appointmentRouter.get('/:id', protect, validateRequest(appointmentIdParamSchema), getAppointmentById)
 appointmentRouter.patch('/:id/status', protect, authorizeRoles('doctor'), validateRequest(updateStatusSchema), updateAppointmentStatus)
 appointmentRouter.patch('/:id/reschedule', protect, authorizeRoles('patient'), validateRequest(rescheduleAppointmentSchema), rescheduleAppointment)
 appointmentRouter.delete('/:id/cancel', protect, authorizeRoles('patient', 'doctor'), validateRequest(cancelAppointmentSchema), cancelAppointment)

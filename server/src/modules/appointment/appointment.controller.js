@@ -9,6 +9,13 @@ export const createAppointment = asyncHandler(async (req, res) => {
   res.status(201).json(new ApiResponse(201, 'Appointment created successfully', appointment))
 })
 
+export const getAppointmentById = asyncHandler(async (req, res) => {
+  const { id } = req.validated.params
+  const appointment = await appointmentService.getAppointmentById(id)
+
+  res.status(200).json(new ApiResponse(200, 'Appointment fetched successfully', appointment))
+})
+
 export const getMyAppointments = asyncHandler(async (req, res) => {
   const result = await appointmentService.getMyAppointments(req.user._id, req.query)
   res.status(200).json(new ApiResponse(200, 'Appointments fetched successfully', result))
