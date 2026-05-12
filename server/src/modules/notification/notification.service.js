@@ -95,7 +95,7 @@ export const markAsRead = async (notificationId, userId) => {
     throw new AppError('Notification not found', 404)
   }
 
-  if (notification.recipient.toString() !== userId) {
+  if (notification.recipient.toString() !== userId.toString()) {
     throw new AppError('Unauthorized to update this notification', 403)
   }
 
@@ -139,13 +139,3 @@ export const deleteNotification = async (notificationId, userId) => {
   return notification
 }
 
-/**
- * Delete all notifications for a user (admin only)
- */
-export const deleteAllNotifications = async (userId) => {
-  const result = await Notification.deleteMany({ recipient: userId })
-
-  return {
-    deletedCount: result.deletedCount,
-  }
-}

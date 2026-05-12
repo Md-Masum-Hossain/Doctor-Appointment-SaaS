@@ -47,7 +47,6 @@ export const deleteFromCloudinary = async (publicId) => {
 
     await cloudinary.uploader.destroy(publicId)
   } catch (error) {
-    console.error(`Cloudinary delete failed: ${error.message}`)
     // Don't throw - deletion failure shouldn't break the app
   }
 }

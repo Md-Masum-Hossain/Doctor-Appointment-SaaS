@@ -12,9 +12,11 @@ import paymentRouter from './modules/payment/payment.route.js'
 import reviewRouter from './modules/review/review.route.js'
 import notificationRouter from './modules/notification/notification.route.js'
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
-import { validateFileUpload } from './utils/fileUpload.js'
+import helmet from 'helmet'
 
 const app = express()
+app.disable('x-powered-by')
+app.set('trust proxy', 1)
 
 const clientUrls = (process.env.CLIENT_URL || '')
   .split(',')
@@ -36,18 +38,26 @@ const isAllowedClientOrigin = (origin) => {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (e.g., Postman, curl)
       if (!origin) return callback(null, true)
       if (isAllowedClientOrigin(origin)) return callback(null, true)
-      return callback(new Error('CORS policy: This origin is not allowed'))
+      return callback(new Error('CORS origin not allowed'))
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['set-cookie'],
+    maxAge: 86400,
+  }),
+)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
   }),
 )
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })) // 5MB limit
+app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }))
 
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/doctors', doctorRouter)

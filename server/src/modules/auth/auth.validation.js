@@ -1,6 +1,4 @@
 import { z } from 'zod'
-
-const roleEnum = z.enum(['patient', 'doctor', 'admin'])
 const registrationRoleEnum = z.enum(['patient', 'doctor'])
 
 export const registerSchema = z.object({

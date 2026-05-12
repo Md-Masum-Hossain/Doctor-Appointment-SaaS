@@ -15,11 +15,8 @@ const startServer = async () => {
     await connectDatabase()
 
     app.listen(PORT, () => {
-      // Keep startup log concise for production diagnostics.
-      console.log(`Server running on port ${PORT}`)
     })
   } catch (error) {
-    console.error('Failed to start server:', error.message)
     process.exit(1)
   }
 }

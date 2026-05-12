@@ -37,19 +37,11 @@ function AdminUsersPage() {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return
     }
-    try {
-      await deleteUserMutation.mutateAsync(userId)
-    } catch (error) {
-      console.error('Delete failed:', error)
-    }
+    deleteUserMutation.mutate(userId)
   }
 
   const handleBlock = async (userId, isBlocked) => {
-    try {
-      await blockUserMutation.mutateAsync({ id: userId, isBlocked: !isBlocked })
-    } catch (error) {
-      console.error('Block action failed:', error)
-    }
+    blockUserMutation.mutate({ id: userId, isBlocked: !isBlocked })
   }
 
   const getRoleBadgeColor = (role) => {

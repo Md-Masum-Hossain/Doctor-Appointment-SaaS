@@ -23,22 +23,18 @@ function AdminDoctorVerificationPage() {
   }
 
   const handleVerify = async (id) => {
-    await verifyMutation.mutateAsync({ id, isVerified: true })
+    verifyMutation.mutate({ id, isVerified: true })
   }
 
   const handleUnverify = async (id) => {
-    await verifyMutation.mutateAsync({ id, isVerified: false })
+    verifyMutation.mutate({ id, isVerified: false })
   }
 
   const handleDelete = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user and their profile? This action cannot be undone.')) {
       return
     }
-    try {
-      await deleteUserMutation.mutateAsync(userId)
-    } catch (error) {
-      console.error('Delete failed:', error)
-    }
+    deleteUserMutation.mutate(userId)
   }
 
   return (

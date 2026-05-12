@@ -2,7 +2,7 @@ export const notFoundHandler = (req, res) => {
   res.status(404).json({
     success: false,
     statusCode: 404,
-    message: `Route not found: ${req.originalUrl}`,
+    message: 'Route not found',
   })
 }
 
@@ -21,10 +21,7 @@ export const errorHandler = (err, req, res, next) => {
 
   if (err.code === 11000) {
     statusCode = 409
-    const duplicateField = Object.keys(err.keyValue || {})[0]
-    message = duplicateField
-      ? `${duplicateField} already exists`
-      : 'Duplicate resource'
+    message = 'Resource already exists'
   }
 
   if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
