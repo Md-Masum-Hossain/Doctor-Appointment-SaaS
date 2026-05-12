@@ -23,6 +23,7 @@ import AdminAppointmentsPage from '../pages/AdminAppointmentsPage'
 import PatientPaymentsPage from '../pages/PatientPaymentsPage'
 import AdminPaymentsPage from '../pages/AdminPaymentsPage'
 import AdminReviewsPage from '../pages/AdminReviewsPage'
+import SymptomCheckerPage from '../pages/SymptomCheckerPage'
 import useAuthStore from '../store/authStore'
 import { getDashboardPathByRole } from '../utils/roleRedirect'
 
@@ -43,6 +44,7 @@ function AppRouter() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
         <Route path="/doctors/:id" element={<DoctorDetailsPage />} />
         <Route path="/login" element={<LoginPage />} />

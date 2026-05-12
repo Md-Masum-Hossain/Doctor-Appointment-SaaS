@@ -6,6 +6,7 @@ import healthRouter from './modules/health/health.route.js'
 import authRouter from './modules/auth/auth.route.js'
 import doctorRouter from './modules/doctor/doctor.route.js'
 import appointmentRouter from './modules/appointment/appointment.route.js'
+import aiRouter from './modules/ai/ai.route.js'
 import userRouter from './modules/user/user.route.js'
 import paymentRouter from './modules/payment/payment.route.js'
 import reviewRouter from './modules/review/review.route.js'
@@ -51,6 +52,7 @@ app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })) // 5MB limit
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/doctors', doctorRouter)
 app.use('/api/v1/appointments', appointmentRouter)
+app.use('/api/v1/ai', aiRouter)
 app.use('/api/v1/payments', paymentRouter)
 app.use('/api/v1/reviews', reviewRouter)
 app.use('/api/v1/notifications', notificationRouter)
