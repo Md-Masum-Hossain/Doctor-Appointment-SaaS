@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import Button from '../ui/Button'
 import Container from '../ui/Container'
 import BrandMark from '../common/BrandMark'
+import NotificationDropdown from '../common/NotificationDropdown'
 import useAuthStore from '../../store/authStore'
 import { getDashboardPathByRole } from '../../utils/roleRedirect'
 
@@ -46,6 +47,7 @@ function Navbar() {
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated && user ? (
               <>
+                <NotificationDropdown />
                 <NavLink to={getDashboardPathByRole(user.role)}>
                   <Button variant="ghost" className="px-3 py-2">
                     {user.role} panel
@@ -99,6 +101,11 @@ function Navbar() {
             <div className="flex flex-wrap gap-2 pt-1">
               {isAuthenticated && user ? (
                 <>
+                  <Link to="/notifications" onClick={closeMenu}>
+                    <Button variant="ghost" className="px-4">
+                      Notifications
+                    </Button>
+                  </Link>
                   <NavLink to={getDashboardPathByRole(user.role)} onClick={closeMenu}>
                     <Button variant="ghost" className="px-4">
                       Dashboard

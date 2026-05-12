@@ -17,6 +17,7 @@ import AdminDoctorVerificationPage from '../pages/AdminDoctorVerificationPage'
 import AdminUsersPage from '../pages/AdminUsersPage'
 import PatientAppointmentsPage from '../pages/PatientAppointmentsPage'
 import PatientReviewsPage from '../pages/PatientReviewsPage'
+import PatientNotificationsPage from '../pages/PatientNotificationsPage'
 import DoctorAppointmentsPage from '../pages/DoctorAppointmentsPage'
 import AdminAppointmentsPage from '../pages/AdminAppointmentsPage'
 import PatientPaymentsPage from '../pages/PatientPaymentsPage'
@@ -56,6 +57,8 @@ function AppRouter() {
             <Route path="/patient/reviews" element={<PatientReviewsPage />} />
             <Route path="/patient/payments" element={<PatientPaymentsPage />} />
           </Route>
+
+          <Route path="/notifications" element={<PatientNotificationsPage />} />
 
           <Route element={<RoleBasedRoute allowedRoles={['doctor']} />}>
             <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />

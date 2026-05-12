@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import DoctorProfile from '../../models/DoctorProfile.js'
 import User from '../../models/User.js'
 import { AppError } from '../../utils/AppError.js'
+import { createNotification } from '../notification/notification.service.js'
 
 const doctorPopulate = [
   {
@@ -161,6 +162,20 @@ export const doctorService = {
     }
 
     await User.findByIdAndUpdate(doctorProfile.user._id, { $set: { isVerified } })
+
+    // Create notification for doctor verification
+    if (isVerified) {
+      await createNotification({
+        recipientId: doctorProfile.user,
+        type: 'doctor-verified',
+        title: 'Profile Verified',
+        message: 'Congratulations! Your doctor profile has been verified by the admin. You can now accept appointments.',
+        relatedResource: {
+          resourceType: 'doctor',
+          resourceId: doctorProfile._id,
+        },
+      })
+    }
 
     return doctorProfile.toObject()
   },

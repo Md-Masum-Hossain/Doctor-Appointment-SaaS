@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import Appointment from '../../models/Appointment.js'
 import DoctorProfile from '../../models/DoctorProfile.js'
 import { AppError } from '../../utils/AppError.js'
+import { createNotification } from '../notification/notification.service.js'
 
 const appointmentPopulate = [
   {
@@ -102,6 +103,19 @@ export const appointmentService = {
     })
 
     const populated = await Appointment.findById(appointment._id).populate(appointmentPopulate)
+    
+    // Create notification for appointment booked
+    await createNotification({
+      recipientId: doctorProfile.user,
+      type: 'appointment-booked',
+      title: 'New Appointment Booking',
+      message: `${populated.patient.name} has booked an appointment with you on ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot}.`,
+      relatedResource: {
+        resourceType: 'appointment',
+        resourceId: appointment._id,
+      },
+    })
+
     return populated.toObject()
   },
 
@@ -183,6 +197,34 @@ export const appointmentService = {
     await appointment.save()
     await appointment.populate(appointmentPopulate)
 
+    // Create notifications based on status change
+    if (payload.status === 'accepted') {
+      await createNotification({
+        recipientId: appointment.patient._id,
+        type: 'appointment-accepted',
+        title: 'Appointment Accepted',
+        message: `Your appointment with Dr. ${appointment.doctor.user.name} on ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot} has been accepted.`,
+        relatedResource: {
+          resourceType: 'appointment',
+          resourceId: appointment._id,
+        },
+      })
+    } else if (payload.status === 'cancelled') {
+      const notifyRecipient = role === 'doctor' ? appointment.patient._id : appointment.doctor.user._id
+      const cancelledByMsg = role === 'doctor' ? 'Doctor' : 'Patient'
+      
+      await createNotification({
+        recipientId: notifyRecipient,
+        type: 'appointment-cancelled',
+        title: 'Appointment Cancelled',
+        message: `Your appointment on ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot} has been cancelled by the ${cancelledByMsg}.`,
+        relatedResource: {
+          resourceType: 'appointment',
+          resourceId: appointment._id,
+        },
+      })
+    }
+
     return appointment.toObject()
   },
 
@@ -241,6 +283,21 @@ export const appointmentService = {
 
     await appointment.save()
     await appointment.populate(appointmentPopulate)
+
+    // Create notification for appointment cancellation
+    const notifyRecipient = role === 'patient' ? appointment.doctor.user._id : appointment.patient._id
+    const cancelledByMsg = role === 'patient' ? 'Patient' : 'Doctor'
+    
+    await createNotification({
+      recipientId: notifyRecipient,
+      type: 'appointment-cancelled',
+      title: 'Appointment Cancelled',
+      message: `Your appointment on ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot} has been cancelled by the ${cancelledByMsg}.`,
+      relatedResource: {
+        resourceType: 'appointment',
+        resourceId: appointment._id,
+      },
+    })
 
     return appointment.toObject()
   },

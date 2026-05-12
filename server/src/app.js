@@ -9,6 +9,7 @@ import appointmentRouter from './modules/appointment/appointment.route.js'
 import userRouter from './modules/user/user.route.js'
 import paymentRouter from './modules/payment/payment.route.js'
 import reviewRouter from './modules/review/review.route.js'
+import notificationRouter from './modules/notification/notification.route.js'
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
 import { validateFileUpload } from './utils/fileUpload.js'
 
@@ -52,6 +53,7 @@ app.use('/api/v1/doctors', doctorRouter)
 app.use('/api/v1/appointments', appointmentRouter)
 app.use('/api/v1/payments', paymentRouter)
 app.use('/api/v1/reviews', reviewRouter)
+app.use('/api/v1/notifications', notificationRouter)
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1', healthRouter)
 

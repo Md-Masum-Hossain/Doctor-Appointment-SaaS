@@ -2,6 +2,7 @@ import Payment from '../../models/Payment.js'
 import Appointment from '../../models/Appointment.js'
 import { AppError } from '../../utils/AppError.js'
 import mongoose from 'mongoose'
+import { createNotification } from '../notification/notification.service.js'
 
 const supportsTransactions = () => {
   const topologyType = mongoose.connection?.client?.topology?.description?.type
@@ -217,15 +218,28 @@ class PaymentService {
 
       // Populate for response
       await payment.populate([
-        { path: 'appointment', select: 'appointmentDate timeSlot' },
-        { path: 'patient', select: 'firstName lastName email phone' },
+        { path: 'appointment', select: 'appointmentDate timeSlot patient doctor' },
+        { path: 'patient', select: 'name email phone' },
         { path: 'doctor', select: 'user specialization' },
-        { path: 'verifiedBy', select: 'firstName lastName email' },
+        { path: 'verifiedBy', select: 'name email' },
       ])
 
       if (session) {
         await session.commitTransaction()
       }
+
+      // Create notification for patient
+      await createNotification({
+        recipientId: payment.patient._id || payment.patient,
+        type: 'payment-verified',
+        title: 'Payment Verified',
+        message: `Your payment of ${payment.amount} has been verified and confirmed. Your appointment is confirmed.`,
+        relatedResource: {
+          resourceType: 'payment',
+          resourceId: payment._id,
+        },
+      })
+
       return payment
     } catch (error) {
       if (session) {
