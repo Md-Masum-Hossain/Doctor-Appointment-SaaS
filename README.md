@@ -123,6 +123,19 @@ npm start
 
 ## Deployment Guide
 
+### Deployment Targets
+
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
+
+### Production Environment Examples
+
+Use these files as the starting point for production deployments:
+
+- [server/.env.production.example](server/.env.production.example)
+- [client/.env.production.example](client/.env.production.example)
+
 ### Render Backend
 
 - Create a new Web Service on Render.
@@ -133,6 +146,8 @@ npm start
 - Set `NODE_ENV=production`.
 - Set `CLIENT_URL` to your deployed Vercel URL.
 - Expose the health route at `/api/v1/health` for uptime checks.
+- Point `MONGO_URI` to your MongoDB Atlas connection string.
+- Keep the Render service running on the port provided by `PORT`.
 
 ### Vercel Frontend
 
@@ -142,6 +157,31 @@ npm start
 - Add `VITE_API_BASE_URL` so the frontend points to the Render backend URL.
 - Keep the existing `client/vercel.json` rewrite so client-side routes continue to work.
 - Set the frontend URL in `CLIENT_URL` on the backend so CORS allows the Vercel domain.
+- Set the root directory in Vercel to `client`.
+- Make sure `VITE_API_BASE_URL` uses the Render backend URL, including `/api/v1`.
+
+### Monorepo Deployment Notes
+
+- Vercel root directory: `client`
+- Render root directory: `server`
+- The backend uses `npm start` for production.
+- The frontend uses `npm run build` to produce the `dist` folder.
+
+## Final Deployment Checklist
+
+- [ ] MongoDB Atlas connection string is valid and reachable.
+- [ ] `CLIENT_URL` on Render matches the deployed Vercel URL.
+- [ ] `VITE_API_BASE_URL` on Vercel points to the Render backend `/api/v1` URL.
+- [ ] Backend `NODE_ENV` is set to `production`.
+- [ ] Backend secrets are strong and unique.
+- [ ] Cloudinary credentials are set if image uploads are used.
+- [ ] Render root directory is `server` and start command is `npm start`.
+- [ ] Vercel root directory is `client` and build command is `npm run build`.
+- [ ] The health endpoint responds at `/api/v1/health`.
+- [ ] Protected routes still require valid auth after deployment.
+- [ ] CORS allows only the production frontend URL.
+- [ ] Refresh-token cookies are stored via httpOnly cookie settings.
+- [ ] Client-side routing works on refresh because of the Vercel rewrite.
 
 ## Notes
 
