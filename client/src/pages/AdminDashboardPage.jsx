@@ -14,6 +14,7 @@ const adminNavigation = [
   { to: '/admin/doctors/verify', label: 'Doctor verification' },
   { to: '/admin/users', label: 'User management' },
   { to: '/admin/appointments', label: 'Appointments' },
+  { to: '/admin/reviews', label: 'Reviews' },
 ]
 
 const formatDate = (value) =>
@@ -160,6 +161,9 @@ function AdminDashboardPage() {
                 </Link>
                 <Link to="/admin/appointments">
                   <Button variant="ghost">Manage appointments</Button>
+                </Link>
+                <Link to="/admin/reviews">
+                  <Button variant="ghost">Moderate reviews</Button>
                 </Link>
               </div>
             </article>

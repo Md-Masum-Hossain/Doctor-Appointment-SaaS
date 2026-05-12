@@ -11,6 +11,7 @@ import { useMyAppointmentsQuery } from '../hooks/useAppointmentsQuery'
 const patientNavigation = [
   { to: '/patient/dashboard', label: 'Overview' },
   { to: '/patient/appointments', label: 'My appointments' },
+  { to: '/patient/reviews', label: 'Review history' },
 ]
 
 const isUpcoming = (appointmentDate, status) => {
@@ -151,6 +152,16 @@ function PatientDashboardPage() {
                   <span className="font-bold text-text">{historySummary.completed}</span>
                 </p>
               </div>
+            </article>
+
+            <article className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-text">Review history</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Read the feedback you have already shared and revisit your past ratings.
+              </p>
+              <Link to="/patient/reviews" className="mt-4 inline-flex">
+                <Button variant="ghost">Open reviews</Button>
+              </Link>
             </article>
 
             <article className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-sm">

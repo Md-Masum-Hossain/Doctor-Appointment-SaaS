@@ -4,14 +4,18 @@ import { motion } from 'framer-motion'
 import Container from '../components/ui/Container'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
+import EmptyState from '../components/ui/EmptyState'
+import LoadingSkeleton from '../components/ui/LoadingSkeleton'
 import Input from '../components/ui/Input'
 import useAuthStore from '../store/authStore'
 import { useDoctorDetailsQuery } from '../hooks/useDoctorsQuery'
 import { useCreateAppointmentMutation } from '../hooks/useAppointmentsQuery'
+import { useDoctorReviewsQuery } from '../hooks/useReviewsQuery'
 
 function DoctorDetailsPage() {
   const { id } = useParams()
   const { data, isLoading, isError, error } = useDoctorDetailsQuery(id)
+  const reviewsQuery = useDoctorReviewsQuery(id, { page: 1, limit: 5, sortOrder: 'desc' })
   const { isAuthenticated, user } = useAuthStore()
   const createAppointmentMutation = useCreateAppointmentMutation()
   const [bookingForm, setBookingForm] = useState({
@@ -22,6 +26,14 @@ function DoctorDetailsPage() {
   })
   const [bookingMessage, setBookingMessage] = useState('')
   const [bookingError, setBookingError] = useState('')
+  const reviews = reviewsQuery.data?.items || []
+
+  const renderStars = (rating) =>
+    Array.from({ length: 5 }, (_, index) => (
+      <span key={index} className={index < rating ? 'text-amber-500' : 'text-slate-300'}>
+        ★
+      </span>
+    ))
 
   const slotSummary = useMemo(() => {
     if (!data?.availableSlots?.length) {
@@ -152,6 +164,59 @@ function DoctorDetailsPage() {
             <p>
               <span className="font-semibold text-text">Available slots:</span> {slotSummary}
             </p>
+          </div>
+
+          <div className="mt-8 space-y-4 rounded-xl bg-white p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-text">Patient reviews</h2>
+                <p className="mt-1 text-sm text-slate-600">Feedback from completed appointments.</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
+                <p className="text-slate-500">Average rating</p>
+                <p className="mt-1 font-semibold text-text">
+                  {data.ratingAverage?.toFixed?.(1) || '0.0'} / 5 · {data.ratingCount || 0} review(s)
+                </p>
+              </div>
+            </div>
+
+            {reviewsQuery.isLoading ? <LoadingSkeleton rows={2} className="mt-4" /> : null}
+            {reviewsQuery.isError ? (
+              <p className="mt-4 text-sm text-rose-600">{reviewsQuery.error?.response?.data?.message || 'Could not load reviews.'}</p>
+            ) : null}
+
+            {!reviewsQuery.isLoading && !reviews.length ? (
+              <div className="mt-4">
+                <EmptyState
+                  title="No reviews yet"
+                  description="This doctor has not received any patient feedback yet."
+                />
+              </div>
+            ) : null}
+
+            {!reviewsQuery.isLoading && reviews.length ? (
+              <div className="mt-4 space-y-4">
+                {reviews.map((review) => (
+                  <article key={review._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-text">{review.patient?.name || 'Patient'}</p>
+                        <p className="text-xs text-slate-500">
+                          {new Date(review.createdAt).toLocaleDateString()} · {review.appointment?.timeSlot || 'Completed visit'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm font-semibold text-amber-600">
+                        {renderStars(review.rating)}
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm text-slate-700">{review.comment}</p>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-6 space-y-3 text-sm text-slate-700">
             <p>
               <span className="font-semibold text-text">Qualifications:</span>{' '}
               {data.qualifications?.length ? data.qualifications.join(', ') : 'Not listed'}

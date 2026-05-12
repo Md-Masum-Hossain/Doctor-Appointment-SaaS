@@ -11,6 +11,7 @@ const adminNavigation = [
   { to: '/admin/doctors/verify', label: 'Doctor verification' },
   { to: '/admin/users', label: 'User management' },
   { to: '/admin/appointments', label: 'Appointments' },
+  { to: '/admin/reviews', label: 'Reviews' },
 ]
 
 function AdminUsersPage() {

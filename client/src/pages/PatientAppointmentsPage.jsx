@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Container from '../components/ui/Container'
 import SectionHeader from '../components/ui/SectionHeader'
 import Button from '../components/ui/Button'
+import Badge from '../components/ui/Badge'
 import Input from '../components/ui/Input'
 import AppointmentStatusBadge from '../components/common/AppointmentStatusBadge'
 import {
@@ -10,6 +11,7 @@ import {
   useMyAppointmentsQuery,
   useRescheduleAppointmentMutation,
 } from '../hooks/useAppointmentsQuery'
+import { useCreateReviewMutation, useMyReviewsQuery } from '../hooks/useReviewsQuery'
 
 const formatDate = (value) =>
   new Intl.DateTimeFormat('en-US', {
@@ -27,23 +29,30 @@ const formatSlots = (slots = []) =>
 function PatientAppointmentsPage() {
   const [page, setPage] = useState(1)
   const [editingAppointmentId, setEditingAppointmentId] = useState(null)
+  const [activeReviewAppointmentId, setActiveReviewAppointmentId] = useState(null)
   const [rescheduleForm, setRescheduleForm] = useState({
     appointmentDate: '',
     timeSlot: '',
     reason: '',
     notes: '',
   })
+  const [reviewForm, setReviewForm] = useState({ rating: '5', comment: '' })
   const [feedback, setFeedback] = useState({ type: '', message: '' })
+  const [reviewFeedback, setReviewFeedback] = useState({ type: '', message: '' })
 
   const { data, isLoading, isError, error } = useMyAppointmentsQuery({ page, limit: 8 })
+  const { data: reviewsData } = useMyReviewsQuery({ page: 1, limit: 50, sortOrder: 'desc' })
   const cancelMutation = useCancelAppointmentMutation()
   const rescheduleMutation = useRescheduleAppointmentMutation()
+  const createReviewMutation = useCreateReviewMutation()
 
   const appointments = data?.items || []
+  const reviewedAppointmentIds = new Set((reviewsData?.items || []).map((review) => review.appointment?._id || review.appointment))
   const pagination = data?.pagination
 
   const openReschedule = (appointment) => {
     setEditingAppointmentId(appointment._id)
+    setActiveReviewAppointmentId(null)
     setFeedback({ type: '', message: '' })
     setRescheduleForm({
       appointmentDate: new Date(appointment.appointmentDate).toISOString().slice(0, 10),
@@ -51,6 +60,14 @@ function PatientAppointmentsPage() {
       reason: appointment.reason || '',
       notes: appointment.notes || '',
     })
+  }
+
+  const openReview = (appointment) => {
+    setActiveReviewAppointmentId(appointment._id)
+    setEditingAppointmentId(null)
+    setFeedback({ type: '', message: '' })
+    setReviewFeedback({ type: '', message: '' })
+    setReviewForm({ rating: '5', comment: '' })
   }
 
   const handleRescheduleChange = (event) => {
@@ -79,12 +96,39 @@ function PatientAppointmentsPage() {
   }
 
   const handleCancel = async (appointmentId) => {
+
+  const handleReviewChange = (event) => {
+    const { name, value } = event.target
+    setReviewForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault()
+    setReviewFeedback({ type: '', message: '' })
+
+    try {
+      await createReviewMutation.mutateAsync({
+        appointmentId: activeReviewAppointmentId,
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment,
+      })
+
+      setReviewFeedback({ type: 'success', message: 'Review submitted successfully.' })
+      setActiveReviewAppointmentId(null)
+      setReviewForm({ rating: '5', comment: '' })
+    } catch (submissionError) {
+      setReviewFeedback({ type: 'error', message: submissionError?.response?.data?.message || 'Could not submit review.' })
+    }
+  }
     setFeedback({ type: '', message: '' })
 
     try {
       await cancelMutation.mutateAsync(appointmentId)
       setFeedback({ type: 'success', message: 'Appointment cancelled successfully.' })
     } catch (submissionError) {
+          {reviewFeedback.message ? (
+            <p className={reviewFeedback.type === 'error' ? 'text-sm text-rose-600' : 'text-sm text-emerald-700'}>{reviewFeedback.message}</p>
+          ) : null}
       setFeedback({ type: 'error', message: submissionError?.response?.data?.message || 'Could not cancel appointment.' })
     }
   }
@@ -151,6 +195,16 @@ function PatientAppointmentsPage() {
                           </Button>
                           <Button variant="ghost" onClick={() => handleCancel(appointment._id)} disabled={cancelMutation.isPending}>
                             {cancelMutation.isPending ? 'Cancelling...' : 'Cancel'}
+
+                      {appointment.status === 'completed' ? (
+                        reviewedAppointmentIds.has(appointment._id) ? (
+                          <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Reviewed</Badge>
+                        ) : (
+                          <Button variant="ghost" onClick={() => openReview(appointment)}>
+                            Write review
+                          </Button>
+                        )
+                      ) : null}
                           </Button>
                         </>
                       ) : null}
@@ -221,6 +275,50 @@ function PatientAppointmentsPage() {
                         </label>
                       </div>
 
+
+                  {activeReviewAppointmentId === appointment._id ? (
+                    <form onSubmit={handleReviewSubmit} className="mt-5 rounded-2xl bg-slate-50 p-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block text-sm">
+                          <span className="mb-1.5 block font-medium text-slate-700">Rating</span>
+                          <select
+                            name="rating"
+                            value={reviewForm.rating}
+                            onChange={handleReviewChange}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-primary"
+                          >
+                            {[5, 4, 3, 2, 1].map((value) => (
+                              <option key={value} value={value}>
+                                {value} star{value > 1 ? 's' : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="block text-sm md:col-span-2">
+                          <span className="mb-1.5 block font-medium text-slate-700">Comment</span>
+                          <textarea
+                            name="comment"
+                            value={reviewForm.comment}
+                            onChange={handleReviewChange}
+                            rows={4}
+                            required
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-primary"
+                            placeholder="Share what went well and what could be improved"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button type="submit" disabled={createReviewMutation.isPending}>
+                          {createReviewMutation.isPending ? 'Submitting...' : 'Submit review'}
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={() => setActiveReviewAppointmentId(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  ) : null}
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Button type="submit" disabled={rescheduleMutation.isPending}>
                           {rescheduleMutation.isPending ? 'Saving...' : 'Save reschedule'}
