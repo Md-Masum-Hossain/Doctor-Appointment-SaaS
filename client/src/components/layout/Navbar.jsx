@@ -10,7 +10,7 @@ import { getDashboardPathByRole } from '../../utils/roleRedirect'
 const links = [
   { to: '/', label: 'Home' },
   { to: '/doctors', label: 'Doctors' },
-  { to: '/symptom-checker', label: 'AI Checker' },
+  { to: '/ai-health-assistant', label: 'AI Assistant' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
 ]

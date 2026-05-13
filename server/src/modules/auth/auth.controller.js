@@ -106,7 +106,12 @@ export const refreshToken = asyncHandler(async (req, res) => {
   const tokenFromCookie = req.cookies[getRefreshCookieName()]
 
   if (!tokenFromCookie) {
-    throw new AppError('Refresh token is missing', 401)
+    return res.status(200).json(
+      new ApiResponse(200, 'No active session', {
+        user: null,
+        accessToken: null,
+      }),
+    )
   }
 
   let payload

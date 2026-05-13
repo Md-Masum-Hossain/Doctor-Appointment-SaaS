@@ -122,6 +122,19 @@ const useAuthStore = create((set) => ({
 
     try {
       const data = await authService.refreshToken()
+
+      if (!data?.accessToken || !data?.user) {
+        clearAccessToken()
+        set({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+          isInitialized: true,
+          isLoading: false,
+        })
+        return
+      }
+
       setAccessToken(data.accessToken)
 
       set({
