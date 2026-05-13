@@ -1,71 +1,65 @@
-import DoctorProfile from '../../models/DoctorProfile.js'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { AppError } from '../../utils/AppError.js'
+import { AI_SYSTEM_PROMPT } from './ai.prompt.js'
+import {
+  detectEmergency,
+  ensureValidAiPayload,
+  parseGeminiJsonResponse,
+  prependEmergencyWarning,
+  withTimeout,
+} from './ai.utils.js'
 
-const specializationRules = [
-  {
-    keywords: ['fever', 'cough', 'cold', 'flu', 'headache', 'viral'],
-    specialization: 'General Medicine',
-  },
-  {
-    keywords: ['chest pain', 'heart', 'palpitation', 'shortness of breath'],
-    specialization: 'Cardiology',
-  },
-  {
-    keywords: ['skin rash', 'rash', 'itching', 'acne', 'eczema'],
-    specialization: 'Dermatology',
-  },
-  {
-    keywords: ['tooth pain', 'toothache', 'dental', 'gum pain'],
-    specialization: 'Dentistry',
-  },
-  {
-    keywords: ['eye pain', 'blurred vision', 'eye', 'vision'],
-    specialization: 'Ophthalmology',
-  },
-]
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 15000)
 
-const normalizeText = (value) =>
-  String(value || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+const getGeminiModel = () => {
+  const apiKey = process.env.GEMINI_API_KEY
 
-const getRecommendedSpecialization = (symptoms) => {
-  const normalizedSymptoms = normalizeText(symptoms)
-
-  for (const rule of specializationRules) {
-    if (rule.keywords.some((keyword) => normalizedSymptoms.includes(keyword))) {
-      return rule.specialization
-    }
+  if (!apiKey) {
+    throw new AppError('Gemini API key is not configured', 500)
   }
 
-  return 'General Medicine'
+  const client = new GoogleGenerativeAI(apiKey)
+  return client.getGenerativeModel({ model: GEMINI_MODEL })
 }
 
-const buildDoctorFilter = (specialization) => ({
-  specialization: { $regex: `^${specialization}$`, $options: 'i' },
-  isVerified: true,
-})
+const buildGeminiPrompt = (message) => `${AI_SYSTEM_PROMPT}\n\nUser message: ${message}`
 
 export const aiService = {
-  async getSymptomRecommendation(symptoms) {
-    const recommendedSpecialization = getRecommendedSpecialization(symptoms)
+  async generateChatResponse(message) {
+    const emergencyDetected = detectEmergency(message)
+    const model = getGeminiModel()
 
-    const doctors = await DoctorProfile.find(buildDoctorFilter(recommendedSpecialization))
-      .populate({
-        path: 'user',
-        select: 'name email phone avatar role isVerified',
-      })
-      .sort({ ratingAverage: -1, ratingCount: -1, createdAt: -1 })
-      .limit(6)
-      .lean()
+    let rawText
+    try {
+      const result = await withTimeout(
+        model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: buildGeminiPrompt(message) }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.3,
+          },
+        }),
+        GEMINI_TIMEOUT_MS,
+        'Gemini request timed out',
+      )
+
+      rawText = result.response?.text?.()
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error
+      }
+
+      throw new AppError('Failed to generate AI response', 502)
+    }
+
+    const parsed = parseGeminiJsonResponse(rawText)
+    const sanitized = ensureValidAiPayload(parsed)
 
     return {
-      symptoms,
-      recommendedSpecialization,
-      matchingDoctors: doctors,
-      confidence: doctors.length > 0 ? 'medium' : 'low',
-      note: 'This is a rule-based placeholder. Real AI can be connected later without changing the API contract.',
+      reply: prependEmergencyWarning(sanitized.reply, emergencyDetected),
+      recommendedSpecialization: sanitized.recommendedSpecialization,
+      emergency: emergencyDetected,
     }
   },
 }
