@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { AppError } from '../../utils/AppError.js'
-import { AI_SYSTEM_PROMPT } from './ai.prompt.js'
+import { buildAiSystemPrompt } from './ai.prompt.js'
+import { detectIntent } from './utils/detectIntent.js'
 import {
   detectEmergency,
   ensureValidAiPayload,
@@ -12,6 +13,11 @@ import {
   withTimeout,
   generateFallbackResponse,
 } from './ai.utils.js'
+import {
+  buildEmergencyResponse,
+  buildMedicalResponse,
+  buildNonMedicalResponse,
+} from './utils/responseMode.js'
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 15000)
@@ -59,24 +65,60 @@ const buildGenerationConfig = () => ({
   maxOutputTokens: 700,
 })
 
+const buildFallbackMedicalResponse = (latestUserMessage, intent, emergencyDetected) => {
+  const fallback = generateFallbackResponse(latestUserMessage)
+
+  if (intent === 'emergency_symptom' || emergencyDetected) {
+    return buildEmergencyResponse({
+      intent,
+      reply: prependEmergencyWarning(fallback.reply, true),
+      recommendedSpecialization: fallback.recommendedSpecialization,
+      tips: fallback.tips,
+      possibleCauses: fallback.possibleCauses,
+    })
+  }
+
+  return buildMedicalResponse({
+    intent,
+    reply: prependEmergencyWarning(fallback.reply, emergencyDetected),
+    recommendedSpecialization: fallback.recommendedSpecialization,
+    emergency: emergencyDetected || fallback.emergency,
+    tips: fallback.tips,
+    possibleCauses: fallback.possibleCauses,
+  })
+}
+
 export const aiService = {
   async generateChatResponse(input) {
     const { messages, latestUserMessage } = normalizeRequestPayload(input)
+    const intentDetection = detectIntent({ messages, message: latestUserMessage })
+    const intent = intentDetection.intent
+    const showMedicalUI = intentDetection.showMedicalUI
 
     if (!latestUserMessage) {
       throw new AppError('Message cannot be empty', 400)
     }
 
+    if (!showMedicalUI) {
+      return buildNonMedicalResponse(intent)
+    }
+
     const userOnlyConversation = messages.filter((message) => message.role === 'user').map((message) => message.content)
     const emergencyDetected = detectEmergency(userOnlyConversation.length ? userOnlyConversation.join(' ') : latestUserMessage)
-    const model = getGeminiModel()
-    const history = buildGeminiHistory(messages)
+
+    if (intent === 'emergency_symptom' || emergencyDetected) {
+      return buildFallbackMedicalResponse(latestUserMessage, 'emergency_symptom', true)
+    }
 
     let rawText
     try {
+      const model = getGeminiModel()
+      const history = buildGeminiHistory(messages)
+      const systemInstruction = buildAiSystemPrompt({ intent, showMedicalUI })
+
       const chat = model.startChat({
         history,
-        systemInstruction: AI_SYSTEM_PROMPT,
+        systemInstruction,
         generationConfig: buildGenerationConfig(),
       })
 
@@ -88,52 +130,29 @@ export const aiService = {
 
       rawText = result.response?.text?.()
     } catch (error) {
-      const fallback = generateFallbackResponse(latestUserMessage)
-
-      return {
-        reply: prependEmergencyWarning(fallback.reply, emergencyDetected),
-        recommendedSpecialization: fallback.recommendedSpecialization,
-        emergency: emergencyDetected || fallback.emergency,
-        tips: fallback.tips,
-        possibleCauses: fallback.possibleCauses,
-      }
+      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
     }
 
     if (!rawText) {
-      const fallback = generateFallbackResponse(latestUserMessage)
-
-      return {
-        reply: prependEmergencyWarning(fallback.reply, emergencyDetected),
-        recommendedSpecialization: fallback.recommendedSpecialization,
-        emergency: emergencyDetected || fallback.emergency,
-        tips: fallback.tips,
-        possibleCauses: fallback.possibleCauses,
-      }
+      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
     }
 
     let parsed
     try {
       parsed = parseGeminiJsonResponse(rawText)
     } catch {
-      const fallback = generateFallbackResponse(latestUserMessage)
-
-      return {
-        reply: prependEmergencyWarning(fallback.reply, emergencyDetected),
-        recommendedSpecialization: fallback.recommendedSpecialization,
-        emergency: emergencyDetected || fallback.emergency,
-        tips: fallback.tips,
-        possibleCauses: fallback.possibleCauses,
-      }
+      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
     }
 
     const sanitized = ensureValidAiPayload(parsed)
 
-    return {
+    return buildMedicalResponse({
+      intent,
       reply: prependEmergencyWarning(sanitized.reply, emergencyDetected),
       recommendedSpecialization: sanitized.recommendedSpecialization,
       emergency: emergencyDetected || sanitized.emergency,
       tips: sanitized.tips,
       possibleCauses: sanitized.possibleCauses,
-    }
+    })
   },
 }

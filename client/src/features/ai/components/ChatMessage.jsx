@@ -51,6 +51,7 @@ export function ChatMessage({ message, isUser }) {
   const replyParagraphs = splitParagraphs(replyText)
   const tips = Array.isArray(message.tips) ? message.tips.filter(Boolean) : []
   const possibleCauses = Array.isArray(message.possibleCauses) ? message.possibleCauses.filter(Boolean) : []
+  const shouldShowMedicalUI = message.showMedicalUI !== false && (message.emergency || Boolean(message.recommendedSpecialization) || tips.length > 0 || possibleCauses.length > 0)
 
   return (
     <motion.div
@@ -75,7 +76,7 @@ export function ChatMessage({ message, isUser }) {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assistant reply</p>
-                  <p className="text-sm font-semibold text-slate-900">{message.recommendedSpecialization || 'General Medicine'}</p>
+                  <p className="text-sm font-semibold text-slate-900">{shouldShowMedicalUI ? (message.recommendedSpecialization || 'General Medicine') : 'Conversation'}</p>
                 </div>
               </div>
               <p className="text-xs text-slate-400">
@@ -86,7 +87,7 @@ export function ChatMessage({ message, isUser }) {
               </p>
             </div>
 
-            {message.emergency ? (
+            {shouldShowMedicalUI && message.emergency ? (
               <EnhancedEmergencyAlert
                 message={replyText || 'Please seek immediate medical attention for these symptoms.'}
               />
@@ -100,12 +101,14 @@ export function ChatMessage({ message, isUser }) {
               ))}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SectionCard title="Possible causes" items={possibleCauses} tone="blue" />
-              <SectionCard title="Wellness tips" items={tips} tone="emerald" />
-            </div>
+            {shouldShowMedicalUI ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SectionCard title="Possible causes" items={possibleCauses} tone="blue" />
+                <SectionCard title="Wellness tips" items={tips} tone="emerald" />
+              </div>
+            ) : null}
 
-            {message.recommendedSpecialization ? (
+            {shouldShowMedicalUI && message.recommendedSpecialization ? (
               <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                 <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
                   <Stethoscope size={13} />

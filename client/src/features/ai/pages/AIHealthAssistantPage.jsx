@@ -22,11 +22,11 @@ export function AIHealthAssistantPage() {
   const hasMessages = messages.length > 0
 
   const latestAIMessage = useMemo(
-    () => [...messages].reverse().find((msg) => msg.type === 'ai' && msg.recommendedSpecialization),
+    () => [...messages].reverse().find((msg) => msg.type === 'ai'),
     [messages],
   )
 
-  const latestSpecialization = latestAIMessage?.recommendedSpecialization || null
+  const latestSpecialization = latestAIMessage?.showMedicalUI ? latestAIMessage?.recommendedSpecialization || null : null
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -89,6 +89,7 @@ export function AIHealthAssistantPage() {
 
   const latestTips = latestAIMessage?.tips || []
   const latestPossibleCauses = latestAIMessage?.possibleCauses || []
+  const showMedicalSummary = Boolean(latestAIMessage?.showMedicalUI)
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef6ff_100%)]">
@@ -211,7 +212,7 @@ export function AIHealthAssistantPage() {
                 </div>
               </div>
 
-              {latestAIMessage ? (
+              {showMedicalSummary && latestAIMessage ? (
                 <div className="mt-4 space-y-4">
                   <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Recommended specialty</p>
@@ -265,7 +266,7 @@ export function AIHealthAssistantPage() {
                 </div>
               ) : (
                 <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                  Start with a symptom or a wellness question. The summary will update as the conversation continues.
+                  Start with a symptom or a wellness question when you want healthcare guidance. Conversational replies will stay simple and uncluttered.
                 </div>
               )}
             </motion.section>

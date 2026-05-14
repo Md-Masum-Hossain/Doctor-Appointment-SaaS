@@ -56,6 +56,8 @@ export const useAIChat = () => {
           id: Date.now() + Math.random(),
           type: 'ai',
           content: response.reply,
+          intent: response.intent,
+          showMedicalUI: response.showMedicalUI,
           recommendedSpecialization: response.recommendedSpecialization,
           emergency: response.emergency,
           tips: response.tips || [],

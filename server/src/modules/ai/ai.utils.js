@@ -326,6 +326,8 @@ export const generateFallbackResponse = (userMessage) => {
 
   return {
     reply: guidance.reply,
+    intent: 'symptom_discussion',
+    showMedicalUI: true,
     recommendedSpecialization: specialization,
     emergency: false,
     tips: guidance.tips,
