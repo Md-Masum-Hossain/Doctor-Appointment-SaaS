@@ -1,22 +1,22 @@
 // Symptom to specialization mapping with healthcare logic
 const symptomSpecializations = [
   {
-    keywords: ['fever', 'cough', 'cold', 'flu', 'sore throat', 'headache', 'body ache'],
+    keywords: ['fever', 'cough', 'cold', 'flu', 'sore throat', 'headache', 'body ache', 'weakness', 'fatigue', 'tiredness'],
     specialization: 'General Medicine',
     priority: 1,
   },
   {
-    keywords: ['chest pain', 'palpitation', 'heart', 'shortness of breath', 'irregular heartbeat'],
+    keywords: ['chest pain', 'palpitation', 'heart', 'shortness of breath', 'irregular heartbeat', 'chest tightness'],
     specialization: 'Cardiology',
     priority: 1,
   },
   {
-    keywords: ['skin rash', 'itching', 'acne', 'eczema', 'psoriasis', 'hives'],
+    keywords: ['skin rash', 'itching', 'acne', 'eczema', 'psoriasis', 'hives', 'rash', 'skin irritation'],
     specialization: 'Dermatology',
     priority: 1,
   },
   {
-    keywords: ['tooth pain', 'toothache', 'dental', 'gum', 'cavity', 'dental decay'],
+    keywords: ['tooth pain', 'toothache', 'dental', 'gum', 'cavity', 'dental decay', 'tooth sensitivity'],
     specialization: 'Dentistry',
     priority: 1,
   },
@@ -26,7 +26,7 @@ const symptomSpecializations = [
     priority: 1,
   },
   {
-    keywords: ['anxiety', 'depression', 'stress', 'panic', 'mental health', 'worried', 'scared'],
+    keywords: ['anxiety', 'depression', 'stress', 'panic', 'mental health', 'worried', 'scared', 'overthinking'],
     specialization: 'Psychiatry',
     priority: 1,
   },
@@ -46,7 +46,7 @@ const symptomSpecializations = [
     priority: 1,
   },
   {
-    keywords: ['cough', 'breathing', 'asthma', 'wheezing', 'pneumonia', 'bronchitis'],
+    keywords: ['cough', 'breathing', 'asthma', 'wheezing', 'pneumonia', 'bronchitis', 'breathlessness'],
     specialization: 'Pulmonology',
     priority: 1,
   },

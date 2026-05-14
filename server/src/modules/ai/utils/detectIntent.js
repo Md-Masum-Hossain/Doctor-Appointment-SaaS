@@ -30,6 +30,25 @@ const hasKeywordMatch = (text, keyword) => {
 
 const countKeywordHits = (text, keywords) => keywords.reduce((count, keyword) => count + (hasKeywordMatch(text, keyword) ? 1 : 0), 0)
 
+const looksLikeLanguageRequest = (text) => {
+  const normalizedText = normalizeIntentText(text)
+
+  if (!normalizedText) {
+    return false
+  }
+
+  const hasBanglaMention = /\b(bangla|bengali)\b/i.test(normalizedText) || /বাংলা/.test(normalizedText)
+  if (!hasBanglaMention) {
+    return false
+  }
+
+  return [
+    /\b(speak|talk|reply|answer|chat|use|write|switch)\b/i,
+    /\b(can you|could you|please|help me|talk me|talk to me|talk with me)\b/i,
+    /\?/,
+  ].some((pattern) => pattern.test(normalizedText))
+}
+
 const isFollowUpStyle = (text) => {
   const normalizedText = normalizeIntentText(text)
 
@@ -78,7 +97,7 @@ const detectLatestIntent = (latestUserMessage) => {
     return 'emergency_symptom'
   }
 
-  if (countKeywordHits(normalized, INTENT_KEYWORDS.languageRequest) > 0) {
+  if (countKeywordHits(normalized, INTENT_KEYWORDS.languageRequest) > 0 || looksLikeLanguageRequest(normalized)) {
     return 'language_request'
   }
 

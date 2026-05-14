@@ -57,11 +57,12 @@ export const useAIChat = () => {
           type: 'ai',
           content: response.reply,
           intent: response.intent,
-          showMedicalUI: response.showMedicalUI,
-          recommendedSpecialization: response.recommendedSpecialization,
-          emergency: response.emergency,
-          tips: response.tips || [],
-          possibleCauses: response.possibleCauses || [],
+          medicalInsights: response.medicalInsights || null,
+          showMedicalUI: Boolean(response.medicalInsights),
+          recommendedSpecialization: response.medicalInsights?.recommendedSpecialization || '',
+          emergency: Boolean(response.medicalInsights?.emergency),
+          tips: response.medicalInsights?.tips || [],
+          possibleCauses: response.medicalInsights?.possibleCauses || [],
           timestamp: new Date(),
         }
 

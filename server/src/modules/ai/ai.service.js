@@ -4,22 +4,23 @@ import { buildAiSystemPrompt } from './ai.prompt.js'
 import { detectIntent } from './utils/detectIntent.js'
 import {
   detectEmergency,
-  ensureValidAiPayload,
   extractLatestUserMessage,
-  buildGeminiHistory,
   normalizeConversationMessages,
   parseGeminiJsonResponse,
-  prependEmergencyWarning,
   withTimeout,
-  generateFallbackResponse,
+  sanitizeGeminiResponse,
+  composeConversationText,
 } from './ai.utils.js'
-import {
-  buildEmergencyResponse,
-  buildMedicalResponse,
-  buildNonMedicalResponse,
-} from './utils/responseMode.js'
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+const GEMINI_MODEL_CANDIDATES = Array.from(
+  new Set([
+    process.env.GEMINI_MODEL,
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+  ].filter(Boolean)),
+)
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 15000)
 const GEMINI_TEMPERATURE = Number(process.env.GEMINI_TEMPERATURE || 0.7)
 
@@ -31,7 +32,17 @@ const getGeminiModel = () => {
   }
 
   const client = new GoogleGenerativeAI(apiKey)
-  return client.getGenerativeModel({ model: GEMINI_MODEL })
+  return {
+    getModel: (modelName) => client.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
+        temperature: GEMINI_TEMPERATURE,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: 900,
+      },
+    }),
+  }
 }
 
 const normalizeRequestPayload = (input) => {
@@ -58,34 +69,67 @@ const normalizeRequestPayload = (input) => {
   }
 }
 
-const buildGenerationConfig = () => ({
-  temperature: GEMINI_TEMPERATURE,
-  topP: 0.9,
-  topK: 40,
-  maxOutputTokens: 700,
-})
+const buildConversationPrompt = ({ intent, emergencyDetected, messages, latestUserMessage }) => {
+  const systemPrompt = buildAiSystemPrompt({ intent, emergencyDetected })
+  const conversationText = composeConversationText(messages)
 
-const buildFallbackMedicalResponse = (latestUserMessage, intent, emergencyDetected) => {
-  const fallback = generateFallbackResponse(latestUserMessage)
+  return `${systemPrompt}
 
-  if (intent === 'emergency_symptom' || emergencyDetected) {
-    return buildEmergencyResponse({
-      intent,
-      reply: prependEmergencyWarning(fallback.reply, true),
-      recommendedSpecialization: fallback.recommendedSpecialization,
-      tips: fallback.tips,
-      possibleCauses: fallback.possibleCauses,
-    })
+CONVERSATION TRANSCRIPT:
+${conversationText || `User: ${latestUserMessage}`}
+
+LATEST USER MESSAGE:
+${latestUserMessage}
+
+Return only valid JSON.`
+}
+
+const buildOperationalFallbackResponse = ({ intent, latestUserMessage, emergencyDetected }) => {
+  const isMedicalIntent = ['symptom_discussion', 'wellness_question', 'emergency_symptom'].includes(intent)
+  const lowerMessage = String(latestUserMessage || '').toLowerCase()
+
+  let safeReply = 'I’m here with you. Tell me a little more and I’ll help as best I can.'
+
+  if (intent === 'greeting') {
+    safeReply = 'Hello 😊 How can I help you today?'
+  } else if (intent === 'gratitude') {
+    safeReply = 'You’re welcome 😊 Take care.'
+  } else if (intent === 'goodbye') {
+    safeReply = 'Take care 😊 I’m here if you need anything later.'
+  } else if (intent === 'language_request') {
+    safeReply = 'হ্যাঁ অবশ্যই 😊 আপনি চাইলে বাংলায় কথা বলতে পারেন। কী নিয়ে সাহায্য চাইছেন?'
+  } else if (intent === 'casual_conversation') {
+    safeReply = 'I’m here and ready to help. What would you like to talk about?'
+  } else if (isMedicalIntent) {
+    if (/\b(chest pain|shortness of breath|breathing difficulty|fainting|seizure|stroke|slurred speech|face drooping|anaphylaxis|swollen lips|swelling throat)\b/i.test(lowerMessage) || emergencyDetected) {
+      safeReply = 'That could be urgent. Please seek immediate medical care or emergency help right away.'
+    } else if (/\b(stress|anxiety|worried|panic|tense)\b/i.test(lowerMessage)) {
+      safeReply = 'Stress or anxiety can feel heavy, but gentle steps can help. Try to slow your breathing, take a short break, and rest if you can.'
+    } else if (/\b(fever|headache|cough|cold|flu|sore throat)\b/i.test(lowerMessage)) {
+      safeReply = 'That can happen with a viral illness or dehydration. Rest, drink fluids, and keep an eye on whether it gets worse.'
+    } else if (/\b(rash|itching|acne|eczema|hives|skin)\b/i.test(lowerMessage)) {
+      safeReply = 'Skin symptoms like that can come from irritation, allergy, or inflammation. Try to avoid anything that seems to trigger it and watch for changes.'
+    } else if (/\b(tooth|gum|dental)\b/i.test(lowerMessage)) {
+      safeReply = 'Dental pain can become harder to ignore quickly. Try to avoid very hot or cold foods and consider seeing a dentist if it keeps bothering you.'
+    } else {
+      safeReply = 'That sounds worth paying attention to. Rest, stay hydrated, and keep note of any changes while you decide the next best step.'
+    }
   }
 
-  return buildMedicalResponse({
+  const medicalInsights = null
+
+  return sanitizeGeminiResponse(
+    {
+      reply: safeReply,
+      intent,
+      medicalInsights,
+    },
     intent,
-    reply: prependEmergencyWarning(fallback.reply, emergencyDetected),
-    recommendedSpecialization: fallback.recommendedSpecialization,
-    emergency: emergencyDetected || fallback.emergency,
-    tips: fallback.tips,
-    possibleCauses: fallback.possibleCauses,
-  })
+    {
+      userMessage: latestUserMessage,
+      emergencyDetected,
+    },
+  )
 }
 
 export const aiService = {
@@ -93,66 +137,78 @@ export const aiService = {
     const { messages, latestUserMessage } = normalizeRequestPayload(input)
     const intentDetection = detectIntent({ messages, message: latestUserMessage })
     const intent = intentDetection.intent
-    const showMedicalUI = intentDetection.showMedicalUI
+    const userOnlyConversation = messages.filter((message) => message.role === 'user').map((message) => message.content)
+    const emergencyDetected = detectEmergency(userOnlyConversation.length ? userOnlyConversation.join(' ') : latestUserMessage)
 
     if (!latestUserMessage) {
       throw new AppError('Message cannot be empty', 400)
     }
 
-    if (!showMedicalUI) {
-      return buildNonMedicalResponse(intent)
-    }
-
-    const userOnlyConversation = messages.filter((message) => message.role === 'user').map((message) => message.content)
-    const emergencyDetected = detectEmergency(userOnlyConversation.length ? userOnlyConversation.join(' ') : latestUserMessage)
-
-    if (intent === 'emergency_symptom' || emergencyDetected) {
-      return buildFallbackMedicalResponse(latestUserMessage, 'emergency_symptom', true)
-    }
-
     let rawText
     try {
-      const model = getGeminiModel()
-      const history = buildGeminiHistory(messages)
-      const systemInstruction = buildAiSystemPrompt({ intent, showMedicalUI })
+      const prompt = buildConversationPrompt({ intent, emergencyDetected, messages, latestUserMessage })
 
-      const chat = model.startChat({
-        history,
-        systemInstruction,
-        generationConfig: buildGenerationConfig(),
-      })
+      const modelClient = getGeminiModel()
+      let lastError = null
 
-      const result = await withTimeout(
-        chat.sendMessage(latestUserMessage),
-        GEMINI_TIMEOUT_MS,
-        'Gemini request timed out',
-      )
+      for (const modelName of GEMINI_MODEL_CANDIDATES) {
+        try {
+          const model = modelClient.getModel(modelName)
+          const result = await withTimeout(
+            model.generateContent(prompt),
+            GEMINI_TIMEOUT_MS,
+            'Gemini request timed out',
+          )
 
-      rawText = result.response?.text?.()
+          rawText = result.response?.text?.()
+
+          if (rawText) {
+            break
+          }
+        } catch (error) {
+          lastError = error
+
+          const message = String(error?.message || '')
+          const isModelNotFound = /404|not found|not supported/i.test(message)
+
+          if (!isModelNotFound) {
+            throw error
+          }
+        }
+      }
+
+      if (!rawText && lastError) {
+        const lastMessage = String(lastError?.message || '')
+        if (/429|quota|rate limit|too many requests|not found|not supported/i.test(lastMessage)) {
+          return buildOperationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
+        }
+
+        throw lastError
+      }
     } catch (error) {
-      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
+      const errorMessage = String(error?.message || '')
+
+      if (/api key is not configured|429|quota|rate limit|too many requests|not found|not supported/i.test(errorMessage)) {
+        return buildOperationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
+      }
+
+      throw error instanceof AppError ? error : new AppError(error.message || 'Gemini request failed', 502)
     }
 
     if (!rawText) {
-      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
+      throw new AppError('Gemini returned an empty response', 502)
     }
 
     let parsed
     try {
       parsed = parseGeminiJsonResponse(rawText)
     } catch {
-      return buildFallbackMedicalResponse(latestUserMessage, intent, emergencyDetected)
+      throw new AppError('Gemini returned invalid JSON payload', 502)
     }
 
-    const sanitized = ensureValidAiPayload(parsed)
-
-    return buildMedicalResponse({
-      intent,
-      reply: prependEmergencyWarning(sanitized.reply, emergencyDetected),
-      recommendedSpecialization: sanitized.recommendedSpecialization,
-      emergency: emergencyDetected || sanitized.emergency,
-      tips: sanitized.tips,
-      possibleCauses: sanitized.possibleCauses,
+    return sanitizeGeminiResponse(parsed, intent, {
+      userMessage: latestUserMessage,
+      emergencyDetected,
     })
   },
 }
