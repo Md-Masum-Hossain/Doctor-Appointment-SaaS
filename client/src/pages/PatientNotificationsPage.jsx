@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Badge from '../components/ui/Badge'
@@ -9,6 +9,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton'
 import { useNotificationsQuery, useMarkAsReadMutation, useMarkAllAsReadMutation, useDeleteNotificationMutation, useUnreadCountQuery } from '../hooks/useNotificationsQuery'
 import useAuthStore from '../store/authStore'
 import { getDashboardPathByRole } from '../utils/roleRedirect'
+import { getNotificationTargetPath } from '../utils/notificationRedirect'
 
 const notificationTypeIcons = {
   'appointment-booked': '📅',
@@ -30,6 +31,7 @@ const notificationTypeBadges = {
 
 function PatientNotificationsPage() {
   const [page, setPage] = useState(1)
+  const navigate = useNavigate()
   const limit = 10
   const { user } = useAuthStore()
   const { data: unreadData } = useUnreadCountQuery()
@@ -61,6 +63,14 @@ function PatientNotificationsPage() {
 
   const handleDelete = (notificationId) => {
     deleteNotificationMutation.mutate(notificationId)
+  }
+
+  const handleOpenNotification = (notification) => {
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification._id)
+    }
+
+    navigate(getNotificationTargetPath(notification, user?.role))
   }
 
   const getNotificationColor = (type) => {
@@ -115,7 +125,16 @@ function PatientNotificationsPage() {
                 key={notification._id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl border transition ${notification.isRead ? 'border-slate-200 bg-white' : 'border-blue-200 bg-blue-50'}`}
+                className={`cursor-pointer rounded-2xl border transition ${notification.isRead ? 'border-slate-200 bg-white hover:bg-slate-50' : 'border-blue-200 bg-blue-50 hover:bg-blue-100'}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleOpenNotification(notification)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleOpenNotification(notification)
+                  }
+                }}
               >
                 <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex gap-3 flex-1">
@@ -146,14 +165,20 @@ function PatientNotificationsPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleMarkAsRead(notification._id, notification.isRead)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleMarkAsRead(notification._id, notification.isRead)
+                        }}
                         disabled={markAsReadMutation.isPending}
                       >
                         Mark read
                       </Button>
                     )}
                     <button
-                      onClick={() => handleDelete(notification._id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(notification._id)
+                      }}
                       disabled={deleteNotificationMutation.isPending}
                       className="text-xs text-slate-500 hover:text-rose-600 disabled:opacity-50"
                     >

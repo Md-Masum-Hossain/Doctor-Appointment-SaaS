@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNotificationsQuery, useMarkAsReadMutation, useDeleteNotificationMutation, useUnreadCountQuery } from '../../hooks/useNotificationsQuery'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
 import LoadingSkeleton from '../ui/LoadingSkeleton'
+import useAuthStore from '../../store/authStore'
+import { getNotificationTargetPath } from '../../utils/notificationRedirect'
 
 const notificationTypeIcons = {
   'appointment-booked': '📅',
@@ -19,6 +21,8 @@ const notificationTypeIcons = {
 function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCountQuery()
   const { data: notificationsData, isLoading, isError, error } = useNotificationsQuery({ page: 1, limit: 5, sortOrder: 'desc' })
   const markAsReadMutation = useMarkAsReadMutation()
@@ -40,13 +44,26 @@ function NotificationDropdown() {
   }, [])
 
   const handleMarkAsRead = (e, notificationId) => {
+    e.stopPropagation()
     e.preventDefault()
     markAsReadMutation.mutate(notificationId)
   }
 
   const handleDelete = (e, notificationId) => {
+    e.stopPropagation()
     e.preventDefault()
     deleteNotificationMutation.mutate(notificationId)
+  }
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification._id)
+    }
+
+    setIsOpen(false)
+
+    const targetPath = getNotificationTargetPath(notification, user?.role)
+    navigate(targetPath)
   }
 
   const getNotificationColor = (type) => {
@@ -85,12 +102,12 @@ function NotificationDropdown() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 top-12 w-96 max-w-full rounded-2xl border border-slate-200 bg-white shadow-lg"
+            className="absolute right-0 top-12 z-50 w-[min(24rem,calc(100vw-1rem))] rounded-2xl border border-slate-200 bg-white shadow-lg"
           >
             <div className="border-b border-slate-200 px-4 py-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-text">Notifications</h3>
-                <Link to="/notifications">
+                <Link to="/notifications" onClick={() => setIsOpen(false)}>
                   <Button size="sm" variant="ghost">
                     View all
                   </Button>
@@ -120,7 +137,16 @@ function NotificationDropdown() {
                   {notifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`px-4 py-3 transition ${notification.isRead ? 'bg-white hover:bg-slate-50' : 'bg-blue-50 hover:bg-blue-100'}`}
+                      className={`cursor-pointer px-4 py-3 transition ${notification.isRead ? 'bg-white hover:bg-slate-50' : 'bg-blue-50 hover:bg-blue-100'}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNotificationClick(notification)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleNotificationClick(notification)
+                        }
+                      }}
                     >
                       <div className="flex gap-3">
                         <span className="text-lg">{notificationTypeIcons[notification.type] || '🔔'}</span>
@@ -159,7 +185,7 @@ function NotificationDropdown() {
             </div>
 
             <div className="border-t border-slate-200 px-4 py-2">
-              <Link to="/notifications">
+              <Link to="/notifications" onClick={() => setIsOpen(false)}>
                 <Button size="sm" variant="ghost" className="w-full">
                   View all notifications
                 </Button>

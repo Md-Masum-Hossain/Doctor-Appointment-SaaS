@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Menu, X } from 'lucide-react'
 import Button from '../ui/Button'
 import Container from '../ui/Container'
 import BrandMark from '../common/BrandMark'
@@ -74,18 +75,24 @@ function Navbar() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 md:hidden"
-            aria-label="Toggle navigation"
-          >
-            Menu
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            {isAuthenticated && user ? <NotificationDropdown /> : null}
+
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-slate-700 transition hover:bg-slate-50"
+              aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isOpen}
+              aria-controls="mobile-navigation"
+            >
+              {isOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          </div>
         </div>
 
         {isOpen ? (
-          <div className="mt-3 space-y-3 border-t border-slate-200 pt-3 md:hidden">
+          <div id="mobile-navigation" className="mt-3 space-y-3 border-t border-slate-200 pt-3 md:hidden">
             {links.map((item) => (
               <NavLink
                 key={item.to}
