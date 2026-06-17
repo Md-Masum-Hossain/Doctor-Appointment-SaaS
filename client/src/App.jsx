@@ -5,7 +5,7 @@ import useAuthStore from './store/authStore'
 import logo from './assets/logo.png'
 
 function App() {
-  const { initializeAuth, isInitialized } = useAuthStore()
+  const { initializeAuth } = useAuthStore()
 
   useEffect(() => {
     initializeAuth()
@@ -27,14 +27,8 @@ function App() {
     iconLink.href = logo
   }, [])
 
-  if (!isInitialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-slate-600">
-        Restoring session...
-      </div>
-    )
-  }
-
+  // Render immediately without blocking
+  // Loading states are handled by ProtectedRoute and page components
   return (
     <BrowserRouter>
       <AppRouter />
