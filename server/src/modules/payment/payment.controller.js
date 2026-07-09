@@ -1,6 +1,18 @@
 import { ApiResponse } from '../../utils/ApiResponse.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 import { paymentService } from './payment.service.js'
+import {
+  initiateSslCommerzPayment,
+  handleSslCommerzSuccess,
+  handleSslCommerzFailure,
+  handleSslCommerzCancel,
+  validateSslCommerzPayment,
+} from './sslcommerz.service.js'
+
+const getRequestBaseUrl = (req) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol
+  return `${protocol}://${req.get('host')}`
+}
 
 export const createPayment = asyncHandler(async (req, res) => {
   const payload = req.validated.body
@@ -52,4 +64,55 @@ export const refundPayment = asyncHandler(async (req, res) => {
 export const getPaymentStats = asyncHandler(async (req, res) => {
   const stats = await paymentService.getPaymentStats()
   res.status(200).json(new ApiResponse(200, 'Payment stats fetched successfully', stats))
+})
+
+export const initiateSslCommerzPaymentController = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.validated.body
+  const result = await initiateSslCommerzPayment({
+    patientId: req.user._id,
+    appointmentId,
+    requestBaseUrl: getRequestBaseUrl(req),
+  })
+
+  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment initialized successfully', result))
+})
+
+export const handleSslCommerzSuccessController = asyncHandler(async (req, res) => {
+  const payload = {
+    ...req.validated.body,
+    ...req.validated.query,
+  }
+  const result = await handleSslCommerzSuccess(payload)
+
+  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment success processed successfully', result))
+})
+
+export const handleSslCommerzFailureController = asyncHandler(async (req, res) => {
+  const payload = {
+    ...req.validated.body,
+    ...req.validated.query,
+  }
+  const result = await handleSslCommerzFailure(payload)
+
+  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment failure processed successfully', result))
+})
+
+export const handleSslCommerzCancelController = asyncHandler(async (req, res) => {
+  const payload = {
+    ...req.validated.body,
+    ...req.validated.query,
+  }
+  const result = await handleSslCommerzCancel(payload)
+
+  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment cancellation processed successfully', result))
+})
+
+export const validateSslCommerzPaymentController = asyncHandler(async (req, res) => {
+  const payload = {
+    ...req.validated.body,
+    ...req.validated.query,
+  }
+  const result = await validateSslCommerzPayment(payload)
+
+  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment validated successfully', result))
 })

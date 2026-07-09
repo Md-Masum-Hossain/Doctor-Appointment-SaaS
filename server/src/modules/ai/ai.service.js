@@ -11,6 +11,7 @@ import {
   sanitizeGeminiResponse,
   composeConversationText,
 } from './ai.utils.js'
+import { generateFollowUpQuestions, formatFollowUpQuestions } from './utils/followUpQuestions.js'
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 const GEMINI_MODEL_CANDIDATES = Array.from(
@@ -84,35 +85,118 @@ ${latestUserMessage}
 Return only valid JSON.`
 }
 
-const buildOperationalFallbackResponse = ({ intent, latestUserMessage, emergencyDetected }) => {
+const buildConversationalFallbackResponse = ({ intent, latestUserMessage, emergencyDetected }) => {
   const isMedicalIntent = ['symptom_discussion', 'wellness_question', 'emergency_symptom'].includes(intent)
   const lowerMessage = String(latestUserMessage || '').toLowerCase()
 
-  let safeReply = 'I’m here with you. Tell me a little more and I’ll help as best I can.'
+  let safeReply = "I'm here with you. Tell me more about what's going on, and I'll do my best to help."
 
-  if (intent === 'greeting') {
-    safeReply = 'Hello 😊 How can I help you today?'
-  } else if (intent === 'gratitude') {
-    safeReply = 'You’re welcome 😊 Take care.'
-  } else if (intent === 'goodbye') {
-    safeReply = 'Take care 😊 I’m here if you need anything later.'
-  } else if (intent === 'language_request') {
-    safeReply = 'হ্যাঁ অবশ্যই 😊 আপনি চাইলে বাংলায় কথা বলতে পারেন। কী নিয়ে সাহায্য চাইছেন?'
-  } else if (intent === 'casual_conversation') {
-    safeReply = 'I’m here and ready to help. What would you like to talk about?'
-  } else if (isMedicalIntent) {
-    if (/\b(chest pain|shortness of breath|breathing difficulty|fainting|seizure|stroke|slurred speech|face drooping|anaphylaxis|swollen lips|swelling throat)\b/i.test(lowerMessage) || emergencyDetected) {
-      safeReply = 'That could be urgent. Please seek immediate medical care or emergency help right away.'
-    } else if (/\b(stress|anxiety|worried|panic|tense)\b/i.test(lowerMessage)) {
-      safeReply = 'Stress or anxiety can feel heavy, but gentle steps can help. Try to slow your breathing, take a short break, and rest if you can.'
-    } else if (/\b(fever|headache|cough|cold|flu|sore throat)\b/i.test(lowerMessage)) {
-      safeReply = 'That can happen with a viral illness or dehydration. Rest, drink fluids, and keep an eye on whether it gets worse.'
-    } else if (/\b(rash|itching|acne|eczema|hives|skin)\b/i.test(lowerMessage)) {
-      safeReply = 'Skin symptoms like that can come from irritation, allergy, or inflammation. Try to avoid anything that seems to trigger it and watch for changes.'
-    } else if (/\b(tooth|gum|dental)\b/i.test(lowerMessage)) {
-      safeReply = 'Dental pain can become harder to ignore quickly. Try to avoid very hot or cold foods and consider seeing a dentist if it keeps bothering you.'
-    } else {
-      safeReply = 'That sounds worth paying attention to. Rest, stay hydrated, and keep note of any changes while you decide the next best step.'
+  // Emergency handling - stay calm but direct
+  if (emergencyDetected || /\b(chest pain|shortness of breath|breathing difficulty|fainting|seizure|stroke|slurred speech|face drooping|anaphylaxis|swollen lips|swelling throat)\b/i.test(lowerMessage)) {
+    safeReply = 'Your symptoms need urgent medical attention right now. Please call emergency services or get to the nearest emergency department immediately. They can properly evaluate and help you.'
+  }
+  // Greeting
+  else if (intent === 'greeting') {
+    const greetings = [
+      'Hi there! 👋 How can I help you today?',
+      'Hello! What brings you in today?',
+      'Hey! What can I do for you?',
+      "Hi! What's on your mind?",
+    ]
+    safeReply = greetings[Math.floor(Math.random() * greetings.length)]
+  }
+  // Gratitude
+  else if (intent === 'gratitude') {
+    const responses = [
+      'Happy to help! Take care of yourself.',
+      "You're welcome! Feel free to reach out anytime.",
+      'My pleasure! Wishing you well.',
+      "You're welcome 😊 Let me know if you need anything else.",
+    ]
+    safeReply = responses[Math.floor(Math.random() * responses.length)]
+  }
+  // Goodbye
+  else if (intent === 'goodbye') {
+    const responses = [
+      "Take care! I'm here whenever you need me.",
+      'Goodbye! Stay well.',
+      'See you later! Take good care.',
+      'All the best! Feel free to come back anytime.',
+    ]
+    safeReply = responses[Math.floor(Math.random() * responses.length)]
+  }
+  // Language request
+  else if (intent === 'language_request') {
+    safeReply = 'নিশ্চিত! 😊 আপনি চাইলে বাংলায় কথা বলতে পারেন। আপনাকে কীভাবে সাহায্য করতে পারি?'
+  }
+  // Casual conversation
+  else if (intent === 'casual_conversation') {
+    const responses = [
+      "That's interesting! Tell me more.",
+      'I see. What else would you like to share?',
+      'Got it. How can I help with that?',
+      'Interesting. What else is on your mind?',
+    ]
+    safeReply = responses[Math.floor(Math.random() * responses.length)]
+  }
+  // Medical intents
+  else if (isMedicalIntent) {
+    // Check for specific symptom patterns
+    if (/\b(stress|anxiety|worried|panic|tense|overwhelmed|depressed)\b/i.test(lowerMessage)) {
+      const responses = [
+        'I hear you. Stress and worry are tough. Have you tried simple breathing exercises or taking a short break? Sometimes that helps reset your mind.',
+        "That sounds heavy. When things feel overwhelming, even a few minutes of rest or deep breathing can help. What usually works for you?",
+        "It's normal to feel this way sometimes. Gentle movement, fresh air, or even talking about it can make a difference. How are you feeling right now?",
+      ]
+      safeReply = responses[Math.floor(Math.random() * responses.length)]
+    }
+    // Fever and cold-like symptoms
+    else if (/\b(fever|headache|cough|cold|flu|sore throat|body ache)\b/i.test(lowerMessage)) {
+      const responses = [
+        'That sounds like it could be a viral illness or maybe dehydration. Rest and fluids are usually the best start. How long has this been going on?',
+        "Those symptoms often come together. Make sure you're staying hydrated and getting rest. If it doesn't improve in a few days, see a doctor.",
+        "I understand. These could be signs of a cold or flu. Drink plenty of water, rest up, and monitor how you feel. Let me know if it gets worse.",
+      ]
+      safeReply = responses[Math.floor(Math.random() * responses.length)]
+      
+      // Add follow-up questions if needed
+      const { questions } = generateFollowUpQuestions(latestUserMessage)
+      if (questions.length > 0) {
+        safeReply += `\n\n${formatFollowUpQuestions(questions)}`
+      }
+    }
+    // Skin issues
+    else if (/\b(rash|itching|acne|eczema|hives|skin|dermatitis)\b/i.test(lowerMessage)) {
+      const responses = [
+        'Skin issues can come from many sources - irritation, allergies, or inflammation. Try to avoid what might trigger it and watch for changes.',
+        "That can be annoying. Keep the area clean and avoid things that seem to make it worse. If it persists, a dermatologist can help.",
+        "I understand. Skin concerns often improve with time and care. Monitor it and see a specialist if it doesn't settle down.",
+      ]
+      safeReply = responses[Math.floor(Math.random() * responses.length)]
+    }
+    // Dental
+    else if (/\b(tooth|gum|dental|teeth|mouth)\b/i.test(lowerMessage)) {
+      const responses = [
+        "Dental pain can get worse quickly, so it's worth addressing. Try to avoid very hot or cold foods and see a dentist soon if it persists.",
+        "Tooth pain usually needs professional attention. In the meantime, avoid hot or cold foods if they make it worse.",
+        "That's worth taking seriously. A dentist can figure out what's happening and how to help.",
+      ]
+      safeReply = responses[Math.floor(Math.random() * responses.length)]
+    }
+    // Generic medical response
+    else {
+      const responses = [
+        "That's worth paying attention to. Rest, stay hydrated, and keep an eye on how you're feeling.",
+        "I understand. Those symptoms are worth monitoring. See a doctor if they don't improve or get worse.",
+        "That sounds uncomfortable. Make sure you're taking care of yourself - rest and fluids help. Let me know if you need anything else.",
+      ]
+      safeReply = responses[Math.floor(Math.random() * responses.length)]
+      
+      // Add follow-up questions if needed
+      const { questions } = generateFollowUpQuestions(latestUserMessage)
+      if (questions.length > 0) {
+        safeReply += `\n\n${formatFollowUpQuestions(questions)}`
+      }
     }
   }
 
@@ -180,7 +264,7 @@ export const aiService = {
       if (!rawText && lastError) {
         const lastMessage = String(lastError?.message || '')
         if (/429|quota|rate limit|too many requests|not found|not supported/i.test(lastMessage)) {
-          return buildOperationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
+          return buildConversationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
         }
 
         throw lastError
@@ -189,7 +273,7 @@ export const aiService = {
       const errorMessage = String(error?.message || '')
 
       if (/api key is not configured|429|quota|rate limit|too many requests|not found|not supported/i.test(errorMessage)) {
-        return buildOperationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
+        return buildConversationalFallbackResponse({ intent, latestUserMessage, emergencyDetected })
       }
 
       throw error instanceof AppError ? error : new AppError(error.message || 'Gemini request failed', 502)

@@ -10,9 +10,17 @@ import {
   rejectPayment,
   refundPayment,
   getPaymentStats,
+  initiateSslCommerzPaymentController,
+  handleSslCommerzSuccessController,
+  handleSslCommerzFailureController,
+  handleSslCommerzCancelController,
+  validateSslCommerzPaymentController,
 } from './payment.controller.js'
 import {
   createPaymentSchema,
+  sslcommerzInitiateSchema,
+  sslcommerzGatewaySchema,
+  sslcommerzValidationSchema,
   paymentIdParamSchema,
   verifyPaymentSchema,
   rejectPaymentSchema,
@@ -24,6 +32,17 @@ const paymentRouter = Router()
 
 // Patient routes
 paymentRouter.post('/', protect, authorizeRoles('patient'), validateRequest(createPaymentSchema), createPayment)
+paymentRouter.post(
+  '/sslcommerz/initiate',
+  protect,
+  authorizeRoles('patient'),
+  validateRequest(sslcommerzInitiateSchema),
+  initiateSslCommerzPaymentController,
+)
+paymentRouter.post('/sslcommerz/validate', validateRequest(sslcommerzValidationSchema), validateSslCommerzPaymentController)
+paymentRouter.all('/sslcommerz/success', validateRequest(sslcommerzGatewaySchema), handleSslCommerzSuccessController)
+paymentRouter.all('/sslcommerz/fail', validateRequest(sslcommerzGatewaySchema), handleSslCommerzFailureController)
+paymentRouter.all('/sslcommerz/cancel', validateRequest(sslcommerzGatewaySchema), handleSslCommerzCancelController)
 paymentRouter.get('/my', protect, authorizeRoles('patient'), validateRequest(paymentListQuerySchema), getMyPayments)
 paymentRouter.get('/:id', protect, validateRequest(paymentIdParamSchema), getPaymentById)
 

@@ -32,15 +32,15 @@ export const appointmentListQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(10),
-    status: z.enum(['pending', 'accepted', 'cancelled', 'completed', 'rescheduled']).optional(),
-    paymentStatus: z.enum(['unpaid', 'paid', 'refunded']).optional(),
+    status: z.enum(['pending', 'accepted', 'confirmed', 'cancelled', 'completed', 'rescheduled']).optional(),
+    paymentStatus: z.enum(['unpaid', 'pending', 'paid', 'failed', 'cancelled', 'refunded']).optional(),
     sortOrder: z.enum(['asc', 'desc']).default('desc'),
   }),
 })
 
 export const updateStatusSchema = z.object({
   body: z.object({
-    status: z.enum(['pending', 'accepted', 'cancelled', 'completed', 'rescheduled']),
+    status: z.enum(['pending', 'accepted', 'confirmed', 'cancelled', 'completed', 'rescheduled']),
     notes: z.string().trim().max(1000).optional(),
   }),
   params: z.object({

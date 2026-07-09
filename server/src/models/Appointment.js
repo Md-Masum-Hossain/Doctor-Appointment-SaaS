@@ -32,14 +32,34 @@ const appointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'cancelled', 'completed', 'rescheduled'],
+      enum: ['pending', 'accepted', 'confirmed', 'cancelled', 'completed', 'rescheduled'],
       default: 'pending',
       index: true,
     },
     paymentStatus: {
       type: String,
-      enum: ['unpaid', 'paid', 'refunded'],
+      enum: ['unpaid', 'pending', 'paid', 'failed', 'cancelled', 'refunded'],
       default: 'unpaid',
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['manual', 'stripe', 'sslcommerz'],
+      default: null,
+    },
+    transactionId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
+    paymentAmount: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+    paidAt: {
+      type: Date,
+      default: null,
     },
     queueNumber: {
       type: Number,
@@ -63,7 +83,7 @@ appointmentSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      status: { $in: ['pending', 'accepted', 'rescheduled'] },
+      status: { $in: ['pending', 'accepted', 'confirmed', 'rescheduled'] },
     },
   },
 )

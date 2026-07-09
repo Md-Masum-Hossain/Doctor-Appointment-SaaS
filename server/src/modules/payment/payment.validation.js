@@ -15,6 +15,44 @@ const createPaymentSchema = z.object({
   query: z.object({}).optional(),
 })
 
+const sslcommerzInitiateSchema = z.object({
+  body: z.object({
+    appointmentId: idSchema,
+  }),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+})
+
+const sslcommerzGatewaySchema = z.object({
+  body: z.object({
+    tran_id: z.string().trim().min(1).optional(),
+    tranId: z.string().trim().min(1).optional(),
+    transactionId: z.string().trim().min(1).optional(),
+    val_id: z.string().trim().min(1).optional(),
+    valId: z.string().trim().min(1).optional(),
+    validationId: z.string().trim().min(1).optional(),
+    status: z.string().trim().optional(),
+    amount: z.coerce.number().optional(),
+    currency: z.string().trim().optional(),
+    bank_tran_id: z.string().trim().optional(),
+    bankTranId: z.string().trim().optional(),
+  }).default({}),
+  params: z.object({}).optional(),
+  query: z.object({
+    tran_id: z.string().trim().min(1).optional(),
+    tranId: z.string().trim().min(1).optional(),
+    transactionId: z.string().trim().min(1).optional(),
+    val_id: z.string().trim().min(1).optional(),
+    valId: z.string().trim().min(1).optional(),
+    validationId: z.string().trim().min(1).optional(),
+    status: z.string().trim().optional(),
+    amount: z.coerce.number().optional(),
+    currency: z.string().trim().optional(),
+    bank_tran_id: z.string().trim().optional(),
+    bankTranId: z.string().trim().optional(),
+  }).default({}),
+})
+
 const paymentIdParamSchema = z.object({
   body: z.object({}).optional(),
   params: z.object({
@@ -65,8 +103,31 @@ const paymentListQuerySchema = z.object({
   }),
 })
 
+const sslcommerzValidationSchema = z.object({
+  body: z.object({
+    tran_id: z.string().trim().min(1).optional(),
+    tranId: z.string().trim().min(1).optional(),
+    transactionId: z.string().trim().min(1).optional(),
+    val_id: z.string().trim().min(1).optional(),
+    valId: z.string().trim().min(1).optional(),
+    validationId: z.string().trim().min(1).optional(),
+  }).default({}),
+  params: z.object({}).optional(),
+  query: z.object({
+    tran_id: z.string().trim().min(1).optional(),
+    tranId: z.string().trim().min(1).optional(),
+    transactionId: z.string().trim().min(1).optional(),
+    val_id: z.string().trim().min(1).optional(),
+    valId: z.string().trim().min(1).optional(),
+    validationId: z.string().trim().min(1).optional(),
+  }).default({}),
+})
+
 export {
   createPaymentSchema,
+  sslcommerzInitiateSchema,
+  sslcommerzGatewaySchema,
+  sslcommerzValidationSchema,
   paymentIdParamSchema,
   verifyPaymentSchema,
   rejectPaymentSchema,

@@ -8,7 +8,7 @@ const notificationPopulate = [
   },
   {
     path: 'relatedResource.resourceId',
-    select: 'appointmentDate timeSlot status paymentStatus transactionId amount',
+    select: 'appointmentDate timeSlot status paymentStatus transactionId paymentAmount',
   },
 ]
 

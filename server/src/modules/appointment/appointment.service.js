@@ -47,7 +47,7 @@ const ensureNoDoubleBooking = async (doctorId, appointmentDate, timeSlot, appoin
     doctor: doctorId,
     appointmentDate,
     timeSlot,
-    status: { $in: ['pending', 'accepted', 'rescheduled'] },
+    status: { $in: ['pending', 'accepted', 'confirmed', 'rescheduled'] },
   }
 
   if (appointmentId) {
@@ -87,7 +87,7 @@ export const appointmentService = {
     const queueNumber = (await Appointment.countDocuments({
       doctor: doctorProfile._id,
       appointmentDate,
-      status: { $in: ['pending', 'accepted', 'rescheduled', 'completed'] },
+      status: { $in: ['pending', 'accepted', 'confirmed', 'rescheduled', 'completed'] },
     })) + 1
 
     const appointment = await Appointment.create({
@@ -175,10 +175,11 @@ export const appointmentService = {
 
     const allowedTransitions = {
       accepted: ['pending', 'rescheduled'],
-      cancelled: ['pending', 'accepted', 'rescheduled'],
-      completed: ['accepted'],
+      confirmed: ['pending', 'accepted', 'rescheduled'],
+      cancelled: ['pending', 'accepted', 'confirmed', 'rescheduled'],
+      completed: ['accepted', 'confirmed'],
       pending: [],
-      rescheduled: ['pending', 'accepted'],
+      rescheduled: ['pending', 'accepted', 'confirmed'],
     }
 
     if (!allowedTransitions[payload.status].includes(appointment.status)) {
