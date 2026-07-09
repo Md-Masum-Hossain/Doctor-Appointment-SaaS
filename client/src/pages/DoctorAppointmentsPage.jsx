@@ -63,6 +63,7 @@ function DoctorAppointmentsPage() {
               >
                 <option value="">All appointments</option>
                 <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="accepted">Accepted</option>
                 <option value="rescheduled">Rescheduled</option>
                 <option value="cancelled">Cancelled</option>
@@ -100,6 +101,8 @@ function DoctorAppointmentsPage() {
                       <p><span className="font-semibold text-text">Slot:</span> {appointment.timeSlot}</p>
                       <p><span className="font-semibold text-text">Queue:</span> #{appointment.queueNumber}</p>
                       <p><span className="font-semibold text-text">Payment:</span> {appointment.paymentStatus}</p>
+                        <p><span className="font-semibold text-text">Payment amount:</span> BDT {appointment.paymentAmount ?? appointment.doctor?.consultationFee ?? 0}</p>
+                        <p><span className="font-semibold text-text">Transaction ID:</span> {appointment.transactionId || 'N/A'}</p>
                     </div>
 
                     <p className="text-sm text-slate-600"><span className="font-semibold text-text">Reason:</span> {appointment.reason}</p>
@@ -116,7 +119,7 @@ function DoctorAppointmentsPage() {
                       </Button>
                     ) : null}
 
-                    {appointment.status === 'accepted' ? (
+                    {appointment.status === 'accepted' || appointment.status === 'confirmed' ? (
                       <Button
                         onClick={() => handleStatusUpdate(appointment._id, 'completed')}
                         disabled={updateStatusMutation.isPending}

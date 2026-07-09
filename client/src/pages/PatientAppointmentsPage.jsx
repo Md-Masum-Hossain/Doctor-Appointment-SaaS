@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Container from '../components/ui/Container'
 import SectionHeader from '../components/ui/SectionHeader'
@@ -27,6 +28,7 @@ const formatSlots = (slots = []) =>
   }))
 
 function PatientAppointmentsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [editingAppointmentId, setEditingAppointmentId] = useState(null)
   const [activeReviewAppointmentId, setActiveReviewAppointmentId] = useState(null)
@@ -39,6 +41,7 @@ function PatientAppointmentsPage() {
   const [reviewForm, setReviewForm] = useState({ rating: '5', comment: '' })
   const [feedback, setFeedback] = useState({ type: '', message: '' })
   const [reviewFeedback, setReviewFeedback] = useState({ type: '', message: '' })
+  const [paymentNotice, setPaymentNotice] = useState({ type: '', message: '' })
 
   const { data, isLoading, isError, error } = useMyAppointmentsQuery({ page, limit: 8 })
   const { data: reviewsData } = useMyReviewsQuery({ page: 1, limit: 50, sortOrder: 'desc' })
@@ -49,6 +52,29 @@ function PatientAppointmentsPage() {
   const appointments = data?.items || []
   const reviewedAppointmentIds = new Set((reviewsData?.items || []).map((review) => review.appointment?._id || review.appointment))
   const pagination = data?.pagination
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('paymentStatus')
+    const message = searchParams.get('message')
+
+    if (paymentStatus && message) {
+      setPaymentNotice({ type: paymentStatus, message })
+
+      const timeoutId = window.setTimeout(() => {
+        setPaymentNotice({ type: '', message: '' })
+      }, 6000)
+
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('paymentStatus')
+      nextParams.delete('appointmentId')
+      nextParams.delete('message')
+      setSearchParams(nextParams, { replace: true })
+
+      return () => window.clearTimeout(timeoutId)
+    }
+
+    return undefined
+  }, [searchParams, setSearchParams])
 
   const openReschedule = (appointment) => {
     setEditingAppointmentId(appointment._id)
@@ -148,6 +174,20 @@ function PatientAppointmentsPage() {
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="mt-8 space-y-4"
         >
+          {paymentNotice.message ? (
+            <div
+              className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${
+                paymentNotice.type === 'success'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : paymentNotice.type === 'failed'
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-amber-200 bg-amber-50 text-amber-700'
+              }`}
+            >
+              {paymentNotice.message}
+            </div>
+          ) : null}
+
           {isLoading ? <p className="text-slate-600">Loading your appointments...</p> : null}
           {isError ? <p className="text-sm text-rose-600">{error?.response?.data?.message || 'Failed to load appointments.'}</p> : null}
           {feedback.message ? (
@@ -181,6 +221,11 @@ function PatientAppointmentsPage() {
                         <p><span className="font-semibold text-text">Slot:</span> {appointment.timeSlot}</p>
                         <p><span className="font-semibold text-text">Queue:</span> #{appointment.queueNumber}</p>
                         <p><span className="font-semibold text-text">Fee:</span> BDT {appointment.doctor?.consultationFee}</p>
+                        <p><span className="font-semibold text-text">Payment status:</span> {appointment.paymentStatus || 'unpaid'}</p>
+                        <p><span className="font-semibold text-text">Payment method:</span> {appointment.paymentMethod || 'N/A'}</p>
+                        <p><span className="font-semibold text-text">Transaction ID:</span> {appointment.transactionId || 'N/A'}</p>
+                        <p><span className="font-semibold text-text">Paid at:</span> {appointment.paidAt ? formatDate(appointment.paidAt) : 'N/A'}</p>
+                        <p className="sm:col-span-2"><span className="font-semibold text-text">Payment amount:</span> BDT {appointment.paymentAmount ?? appointment.doctor?.consultationFee ?? 0}</p>
                       </div>
 
                       <p className="text-sm text-slate-600"><span className="font-semibold text-text">Reason:</span> {appointment.reason}</p>

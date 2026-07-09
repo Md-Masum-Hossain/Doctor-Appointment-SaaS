@@ -6,6 +6,16 @@ export const paymentService = {
     return apiClient.post('/payments', paymentData)
   },
 
+  // Initialize SSLCommerz payment
+  initializeSslCommerzPayment: (appointmentId) => {
+    return apiClient.post('/payments/sslcommerz/initiate', { appointmentId })
+  },
+
+  // Validate SSLCommerz payment callback
+  validateSslCommerzPayment: (payload) => {
+    return apiClient.post('/payments/sslcommerz/validate', payload)
+  },
+
   // Get patient payments
   getMyPayments: (params = {}) => {
     return apiClient.get('/payments/my', { params })

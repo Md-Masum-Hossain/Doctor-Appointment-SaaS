@@ -10,6 +10,7 @@ import Input from '../components/ui/Input'
 import useAuthStore from '../store/authStore'
 import { useDoctorDetailsQuery } from '../hooks/useDoctorsQuery'
 import { useCreateAppointmentMutation } from '../hooks/useAppointmentsQuery'
+import { paymentService } from '../services/paymentService'
 import { useDoctorReviewsQuery } from '../hooks/useReviewsQuery'
 
 function DoctorDetailsPage() {
@@ -54,7 +55,7 @@ function DoctorDetailsPage() {
     setBookingError('')
 
     try {
-      await createAppointmentMutation.mutateAsync({
+      const createdAppointment = await createAppointmentMutation.mutateAsync({
         doctorId: data._id,
         appointmentDate: bookingForm.appointmentDate,
         timeSlot: bookingForm.timeSlot,
@@ -62,7 +63,17 @@ function DoctorDetailsPage() {
         notes: bookingForm.notes,
       })
 
-      setBookingMessage('Appointment request submitted successfully.')
+      const paymentResponse = await paymentService.initializeSslCommerzPayment(createdAppointment._id)
+      const paymentData = paymentResponse?.data?.data || paymentResponse?.data
+      const gatewayUrl = paymentData?.gatewayPageURL || paymentData?.gatewayPageUrl || paymentData?.GatewayPageURL
+
+      if (gatewayUrl) {
+        setBookingMessage('Redirecting to secure payment...')
+        window.location.assign(gatewayUrl)
+        return
+      }
+
+      setBookingMessage('Appointment request submitted successfully. Payment will be handled separately.')
       setBookingForm({ appointmentDate: '', timeSlot: '', reason: '', notes: '' })
     } catch (submissionError) {
       setBookingError(submissionError?.response?.data?.message || 'Could not book appointment.')

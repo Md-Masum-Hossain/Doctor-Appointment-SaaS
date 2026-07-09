@@ -61,6 +61,9 @@ function AdminAppointmentsPage() {
                       <p><span className="font-semibold text-text">Slot:</span> {appointment.timeSlot}</p>
                       <p><span className="font-semibold text-text">Queue:</span> #{appointment.queueNumber}</p>
                       <p><span className="font-semibold text-text">Payment:</span> {appointment.paymentStatus}</p>
+                      <p><span className="font-semibold text-text">Method:</span> {appointment.paymentMethod || 'N/A'}</p>
+                      <p><span className="font-semibold text-text">Amount:</span> BDT {appointment.paymentAmount ?? appointment.doctor?.consultationFee ?? 0}</p>
+                      <p className="sm:col-span-2"><span className="font-semibold text-text">Transaction ID:</span> {appointment.transactionId || 'N/A'}</p>
                     </div>
                   </div>
                 </div>

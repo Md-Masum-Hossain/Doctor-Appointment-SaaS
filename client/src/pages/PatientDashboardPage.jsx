@@ -19,7 +19,7 @@ const isUpcoming = (appointmentDate, status) => {
   todayStart.setHours(0, 0, 0, 0)
   const visitDate = new Date(appointmentDate)
 
-  return ['pending', 'accepted', 'rescheduled'].includes(status) && visitDate >= todayStart
+  return ['pending', 'accepted', 'confirmed', 'rescheduled'].includes(status) && visitDate >= todayStart
 }
 
 const formatDate = (value) =>
@@ -47,6 +47,7 @@ function PatientDashboardPage() {
       accepted: 0,
       cancelled: 0,
       completed: 0,
+      confirmed: 0,
       rescheduled: 0,
     },
   )
