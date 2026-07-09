@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import Appointment from '../../models/Appointment.js'
 import DoctorProfile from '../../models/DoctorProfile.js'
 import User from '../../models/User.js'
 import { AppError } from '../../utils/AppError.js'
@@ -67,6 +68,23 @@ const sanitizePayload = (payload) => {
     }
     return acc
   }, {})
+}
+
+const buildMonthKey = (date) => {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+const buildMonthLabel = (monthKey) => {
+  const [year, month] = monthKey.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, 1))
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date)
 }
 
 export const doctorService = {
@@ -148,6 +166,75 @@ export const doctorService = {
     }
 
     return doctorProfile.toObject()
+  },
+
+  async getDoctorDashboardStats(userId, query) {
+    const doctorProfile = await DoctorProfile.findOne({ user: userId }).select('_id consultationFee').lean()
+
+    if (!doctorProfile) {
+      throw new AppError('Doctor profile not found', 404)
+    }
+
+    const periodMonths = Number(query?.periodMonths || 6)
+    const safePeriodMonths = Number.isFinite(periodMonths) ? Math.min(Math.max(periodMonths, 1), 12) : 6
+    const since = new Date()
+    since.setUTCDate(1)
+    since.setUTCHours(0, 0, 0, 0)
+    since.setUTCMonth(since.getUTCMonth() - safePeriodMonths + 1)
+
+    const [completedAppointmentsCount, appointments] = await Promise.all([
+      Appointment.countDocuments({ doctor: doctorProfile._id, status: 'completed' }),
+      Appointment.find({
+        doctor: doctorProfile._id,
+        status: 'completed',
+        appointmentDate: { $gte: since },
+      })
+        .select('appointmentDate paymentStatus paymentAmount')
+        .sort({ appointmentDate: 1 })
+        .lean(),
+    ])
+
+    const revenueByMonth = new Map()
+
+    let totalEarnings = 0
+
+    appointments.forEach((appointment) => {
+      if (appointment.paymentStatus !== 'paid') {
+        return
+      }
+
+      const amount = Number(appointment.paymentAmount ?? doctorProfile.consultationFee ?? 0)
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return
+      }
+
+      totalEarnings += amount
+
+      const monthKey = buildMonthKey(new Date(appointment.appointmentDate))
+      const current = revenueByMonth.get(monthKey) || { monthKey, label: buildMonthLabel(monthKey), amount: 0, appointments: 0 }
+
+      current.amount += amount
+      current.appointments += 1
+      revenueByMonth.set(monthKey, current)
+    })
+
+    const monthlyRevenue = Array.from(revenueByMonth.values()).sort((left, right) => left.monthKey.localeCompare(right.monthKey))
+    const currentMonthKey = buildMonthKey(new Date())
+    const currentMonth = revenueByMonth.get(currentMonthKey) || {
+      monthKey: currentMonthKey,
+      label: buildMonthLabel(currentMonthKey),
+      amount: 0,
+      appointments: 0,
+    }
+
+    return {
+      totalEarnings,
+      completedAppointments: completedAppointmentsCount,
+      revenueStatistics: {
+        currentMonth,
+        monthly: monthlyRevenue,
+      },
+    }
   },
 
   async verifyDoctorProfile(id, isVerified) {

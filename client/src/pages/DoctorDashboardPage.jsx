@@ -7,6 +7,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton'
 import StatCard from '../components/ui/StatCard'
 import StatusBadge from '../components/ui/StatusBadge'
 import { useDoctorAppointmentsQuery } from '../hooks/useAppointmentsQuery'
+import { useDoctorDashboardStatsQuery } from '../hooks/useDoctorsQuery'
 
 const doctorNavigation = [
   { to: '/doctor/dashboard', label: 'Overview' },
@@ -29,10 +30,11 @@ const formatDate = (value) =>
 function DoctorDashboardPage() {
   const allAppointmentsQuery = useDoctorAppointmentsQuery({ page: 1, limit: 50, sortOrder: 'asc' })
   const pendingQuery = useDoctorAppointmentsQuery({ page: 1, limit: 1, status: 'pending' })
-  const completedQuery = useDoctorAppointmentsQuery({ page: 1, limit: 1, status: 'completed' })
+  const statsQuery = useDoctorDashboardStatsQuery({ periodMonths: 6 })
 
   const allAppointments = allAppointmentsQuery.data?.items ?? []
   const today = new Date()
+  const dashboardStats = statsQuery.data ?? {}
 
   const todaysAppointments = allAppointments
     .filter((appointment) => isSameDay(new Date(appointment.appointmentDate), today))
@@ -43,7 +45,16 @@ function DoctorDashboardPage() {
     .slice(0, 6)
 
   const pendingCount = pendingQuery.data?.pagination?.total || 0
-  const completedCount = completedQuery.data?.pagination?.total || 0
+  const completedCount = dashboardStats.completedAppointments || 0
+  const totalEarnings = dashboardStats.totalEarnings || 0
+  const currentMonthRevenue = dashboardStats.revenueStatistics?.currentMonth?.amount || 0
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'BDT',
+      maximumFractionDigits: 0,
+    }).format(Number(value) || 0)
 
   const todaysColumns = [
     {
@@ -89,7 +100,7 @@ function DoctorDashboardPage() {
     },
   ]
 
-  const isLoading = allAppointmentsQuery.isLoading || pendingQuery.isLoading || completedQuery.isLoading
+  const isLoading = allAppointmentsQuery.isLoading || pendingQuery.isLoading || statsQuery.isLoading
 
   return (
     <DashboardLayout
@@ -98,7 +109,7 @@ function DoctorDashboardPage() {
       navigation={doctorNavigation}
     >
       <div className="space-y-6">
-        {allAppointmentsQuery.isError || pendingQuery.isError || completedQuery.isError ? (
+        {allAppointmentsQuery.isError || pendingQuery.isError || statsQuery.isError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {allAppointmentsQuery.error?.response?.data?.message || 'Could not load dashboard details.'}
           </div>
@@ -111,7 +122,14 @@ function DoctorDashboardPage() {
             <StatCard label="Today appointments" value={todaysAppointments.length} helper="Scheduled for today" icon="TD" index={0} />
             <StatCard label="Pending requests" value={pendingCount} helper="Awaiting your response" icon="PD" tone="warning" index={1} />
             <StatCard label="Completed appointments" value={completedCount} helper="Marked as completed" icon="CM" tone="success" index={2} />
-            <StatCard label="Earnings" value="--" helper="Payment module coming soon" icon="BDT" tone="accent" index={3} />
+            <StatCard
+              label="Earnings"
+              value={formatCurrency(totalEarnings)}
+              helper={`Revenue this month: ${formatCurrency(currentMonthRevenue)}`}
+              icon="BDT"
+              tone="accent"
+              index={3}
+            />
           </div>
         )}
 

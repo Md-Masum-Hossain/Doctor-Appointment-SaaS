@@ -4,6 +4,7 @@ import { validateRequest } from '../../middlewares/validateRequest.js'
 import { validateFileUpload } from '../../utils/fileUpload.js'
 import {
   createDoctorProfile,
+  getDoctorDashboardStats,
   getMyDoctorProfile,
   getDoctorById,
   getDoctors,
@@ -13,6 +14,7 @@ import {
 import {
   createDoctorProfileSchema,
   doctorIdParamSchema,
+  doctorDashboardStatsQuerySchema,
   getDoctorsQuerySchema,
   updateDoctorProfileSchema,
   verifyDoctorSchema,
@@ -22,6 +24,7 @@ const doctorRouter = Router()
 
 doctorRouter.get('/', validateRequest(getDoctorsQuerySchema), getDoctors)
 doctorRouter.get('/profile', protect, authorizeRoles('doctor'), getMyDoctorProfile)
+doctorRouter.get('/dashboard/stats', protect, authorizeRoles('doctor'), validateRequest(doctorDashboardStatsQuerySchema), getDoctorDashboardStats)
 doctorRouter.get('/:id', validateRequest(doctorIdParamSchema), getDoctorById)
 
 doctorRouter.post(

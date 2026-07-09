@@ -79,3 +79,11 @@ export const getDoctorsQuerySchema = z.object({
     verified: z.enum(['true', 'false']).optional(),
   }),
 })
+
+export const doctorDashboardStatsQuerySchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({}).optional(),
+  query: z.object({
+    periodMonths: z.coerce.number().int().min(1).max(12).default(6),
+  }),
+})

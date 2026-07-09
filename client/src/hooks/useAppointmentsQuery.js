@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { appointmentService } from '../services/appointmentService'
+import { doctorQueryKeys } from './useDoctorsQuery'
 
 export const appointmentQueryKeys = {
   all: ['appointments'],
@@ -44,6 +45,7 @@ export const useUpdateAppointmentStatusMutation = () => {
     mutationFn: ({ id, status, notes }) => appointmentService.updateStatus(id, { status, notes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: appointmentQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: doctorQueryKeys.dashboardStats })
     },
   })
 }

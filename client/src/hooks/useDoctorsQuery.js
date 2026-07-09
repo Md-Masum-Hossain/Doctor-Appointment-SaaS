@@ -6,6 +6,8 @@ export const doctorQueryKeys = {
   list: (filters) => ['doctors', 'list', filters],
   detail: (id) => ['doctors', 'detail', id],
   myProfile: ['doctors', 'me', 'profile'],
+  dashboardStats: ['doctors', 'dashboard', 'stats'],
+  dashboardStatsQuery: (filters) => [...doctorQueryKeys.dashboardStats, filters],
 }
 
 export const useDoctorsQuery = (filters) =>
@@ -26,6 +28,12 @@ export const useMyDoctorProfileQuery = () =>
   useQuery({
     queryKey: doctorQueryKeys.myProfile,
     queryFn: doctorService.getMyProfile,
+  })
+
+export const useDoctorDashboardStatsQuery = (filters) =>
+  useQuery({
+    queryKey: doctorQueryKeys.dashboardStatsQuery(filters),
+    queryFn: () => doctorService.getDashboardStats(filters),
   })
 
 export const useCreateDoctorProfileMutation = () => {

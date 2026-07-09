@@ -59,6 +59,12 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Doctor profile updated successfully', doctorProfile))
 })
 
+export const getDoctorDashboardStats = asyncHandler(async (req, res) => {
+  const stats = await doctorService.getDoctorDashboardStats(req.user._id, req.query)
+
+  res.status(200).json(new ApiResponse(200, 'Doctor dashboard stats fetched successfully', stats))
+})
+
 export const verifyDoctorProfile = asyncHandler(async (req, res) => {
   const { id } = req.validated?.params || req.params
   const isVerified = req.validated?.body?.isVerified ?? true

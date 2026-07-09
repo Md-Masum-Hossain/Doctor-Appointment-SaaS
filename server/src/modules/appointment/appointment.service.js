@@ -97,6 +97,7 @@ export const appointmentService = {
       timeSlot: payload.timeSlot,
       reason: sanitizeText(payload.reason),
       notes: sanitizeText(payload.notes) || '',
+      paymentAmount: doctorProfile.consultationFee,
       queueNumber,
       status: 'pending',
       paymentStatus: 'unpaid',
