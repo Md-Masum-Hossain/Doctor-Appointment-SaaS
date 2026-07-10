@@ -27,6 +27,7 @@ function DoctorDetailsPage() {
   })
   const [bookingMessage, setBookingMessage] = useState('')
   const [bookingError, setBookingError] = useState('')
+  const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false)
   const reviews = reviewsQuery.data?.items || []
 
   const renderStars = (rating) =>
@@ -53,6 +54,7 @@ function DoctorDetailsPage() {
     event.preventDefault()
     setBookingMessage('')
     setBookingError('')
+    setIsRedirectingToPayment(true)
 
     try {
       const createdAppointment = await createAppointmentMutation.mutateAsync({
@@ -68,14 +70,14 @@ function DoctorDetailsPage() {
       const gatewayUrl = paymentData?.gatewayPageURL || paymentData?.gatewayPageUrl || paymentData?.GatewayPageURL
 
       if (gatewayUrl) {
-        setBookingMessage('Redirecting to secure payment...')
         window.location.assign(gatewayUrl)
         return
       }
 
-      setBookingMessage('Appointment request submitted successfully. Payment will be handled separately.')
+      setIsRedirectingToPayment(false)
       setBookingForm({ appointmentDate: '', timeSlot: '', reason: '', notes: '' })
     } catch (submissionError) {
+      setIsRedirectingToPayment(false)
       setBookingError(submissionError?.response?.data?.message || 'Could not book appointment.')
     }
   }
@@ -105,6 +107,21 @@ function DoctorDetailsPage() {
 
   return (
     <div className="py-10">
+      {isRedirectingToPayment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white px-6 py-8 text-center shadow-2xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <svg className="h-7 w-7 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-20" />
+                <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-text">Preparing secure payment...</h2>
+            <p className="mt-2 text-sm text-slate-600">Please wait while we connect you to SSLCommerz.</p>
+          </div>
+        </div>
+      ) : null}
+
       <Container>
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -305,8 +322,8 @@ function DoctorDetailsPage() {
                 {bookingError ? <p className="text-sm text-rose-600 md:col-span-2">{bookingError}</p> : null}
 
                 <div className="md:col-span-2">
-                  <Button type="submit" disabled={createAppointmentMutation.isPending}>
-                    {createAppointmentMutation.isPending ? 'Submitting...' : 'Book appointment'}
+                  <Button type="submit" disabled={createAppointmentMutation.isPending || isRedirectingToPayment}>
+                    {createAppointmentMutation.isPending || isRedirectingToPayment ? 'Processing...' : 'Pay Now'}
                   </Button>
                 </div>
               </form>

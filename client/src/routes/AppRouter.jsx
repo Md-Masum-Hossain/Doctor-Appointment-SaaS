@@ -23,6 +23,7 @@ import AdminAppointmentsPage from '../pages/AdminAppointmentsPage'
 import PatientPaymentsPage from '../pages/PatientPaymentsPage'
 import AdminPaymentsPage from '../pages/AdminPaymentsPage'
 import AdminReviewsPage from '../pages/AdminReviewsPage'
+import PaymentStatusPage from '../pages/PaymentStatusPage'
 import { AIHealthAssistantPage } from '../features/ai/pages/AIHealthAssistantPage'
 import useAuthStore from '../store/authStore'
 import { getDashboardPathByRole } from '../utils/roleRedirect'
@@ -48,6 +49,9 @@ function AppRouter() {
         <Route path="/ai-health-assistant" element={<AIHealthAssistantPage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
         <Route path="/doctors/:id" element={<DoctorDetailsPage />} />
+        <Route path="/payment/success" element={<PaymentStatusPage status="success" />} />
+        <Route path="/payment/failed" element={<PaymentStatusPage status="failed" />} />
+        <Route path="/payment/cancelled" element={<PaymentStatusPage status="cancelled" />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

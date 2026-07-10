@@ -32,6 +32,16 @@ const getClientRedirectUrl = (path, params = {}) => {
   return redirectUrl.toString()
 }
 
+const redirectToClient = (res, path, params = {}) => {
+  const redirectUrl = getClientRedirectUrl(path, params)
+
+  if (!redirectUrl) {
+    throw new Error('CLIENT_URL is not configured')
+  }
+
+  return res.redirect(303, redirectUrl)
+}
+
 export const createPayment = asyncHandler(async (req, res) => {
   const payload = req.validated.body
   const payment = await paymentService.createPayment(req.user._id, payload)
@@ -96,63 +106,69 @@ export const initiateSslCommerzPaymentController = asyncHandler(async (req, res)
 })
 
 export const handleSslCommerzSuccessController = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.validated.body,
-    ...req.validated.query,
+  try {
+    const payload = {
+      ...req.validated.body,
+      ...req.validated.query,
+    }
+    const result = await handleSslCommerzSuccess(payload)
+
+    return redirectToClient(res, '/payment/success', {
+      paymentStatus: 'success',
+      appointmentId: result._id,
+      transactionId: result.transactionId,
+      message: 'Payment successful. Your appointment is confirmed.',
+    })
+  } catch (error) {
+    return redirectToClient(res, '/payment/failed', {
+      paymentStatus: 'failed',
+      message: error?.message || 'Payment validation failed. Your appointment is still pending.',
+    })
   }
-  const result = await handleSslCommerzSuccess(payload)
-
-  const redirectUrl = getClientRedirectUrl('/patient/appointments', {
-    paymentStatus: 'success',
-    appointmentId: result._id,
-    message: 'Payment successful. Your appointment is confirmed.',
-  })
-
-  if (redirectUrl) {
-    return res.redirect(303, redirectUrl)
-  }
-
-  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment success processed successfully', result))
 })
 
 export const handleSslCommerzFailureController = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.validated.body,
-    ...req.validated.query,
+  try {
+    const payload = {
+      ...req.validated.body,
+      ...req.validated.query,
+    }
+    const result = await handleSslCommerzFailure(payload)
+
+    return redirectToClient(res, '/payment/failed', {
+      paymentStatus: 'failed',
+      appointmentId: result._id,
+      transactionId: result.transactionId,
+      message: 'Payment failed. Your appointment is still pending.',
+    })
+  } catch (error) {
+    return redirectToClient(res, '/payment/failed', {
+      paymentStatus: 'failed',
+      message: error?.message || 'Payment failed. Your appointment is still pending.',
+    })
   }
-  const result = await handleSslCommerzFailure(payload)
-
-  const redirectUrl = getClientRedirectUrl('/patient/appointments', {
-    paymentStatus: 'failed',
-    appointmentId: result._id,
-    message: 'Payment failed. Your appointment is still pending.',
-  })
-
-  if (redirectUrl) {
-    return res.redirect(303, redirectUrl)
-  }
-
-  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment failure processed successfully', result))
 })
 
 export const handleSslCommerzCancelController = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.validated.body,
-    ...req.validated.query,
+  try {
+    const payload = {
+      ...req.validated.body,
+      ...req.validated.query,
+    }
+    const result = await handleSslCommerzCancel(payload)
+
+    return redirectToClient(res, '/payment/cancelled', {
+      paymentStatus: 'cancelled',
+      appointmentId: result._id,
+      transactionId: result.transactionId,
+      message: 'Payment cancelled. Your appointment remains pending.',
+    })
+  } catch (error) {
+    return redirectToClient(res, '/payment/cancelled', {
+      paymentStatus: 'cancelled',
+      message: error?.message || 'Payment cancelled. Your appointment remains pending.',
+    })
   }
-  const result = await handleSslCommerzCancel(payload)
-
-  const redirectUrl = getClientRedirectUrl('/patient/appointments', {
-    paymentStatus: 'cancelled',
-    appointmentId: result._id,
-    message: 'Payment cancelled. Your appointment remains pending.',
-  })
-
-  if (redirectUrl) {
-    return res.redirect(303, redirectUrl)
-  }
-
-  res.status(200).json(new ApiResponse(200, 'SSLCommerz payment cancellation processed successfully', result))
 })
 
 export const validateSslCommerzPaymentController = asyncHandler(async (req, res) => {

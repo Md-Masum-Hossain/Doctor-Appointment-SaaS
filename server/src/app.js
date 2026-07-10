@@ -35,20 +35,66 @@ const isAllowedClientOrigin = (origin) => {
   return false
 }
 
+
+
+// app.use(
+//   (req, res, next) => {
+//     if (isSslCommerzCallbackRoute(req.path)) {
+//       return next()
+//     }
+
+//     return cors({
+//       origin: (origin, callback) => {
+//         if (!origin) return callback(null, true)
+//         if (isAllowedClientOrigin(origin)) return callback(null, true)
+//           console.log("blocked")
+//         return callback(new Error('CORS origin not allowed'))
+//       },
+//       credentials: true,
+//       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//       exposedHeaders: ['set-cookie'],
+//       maxAge: 86400,
+//     })(req, res, next)
+//   },
+// )
+
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      if (isAllowedClientOrigin(origin)) return callback(null, true)
-      return callback(new Error('CORS origin not allowed'))
+    origin(origin, callback) {
+      // Postman / SSLCommerz callback / server-to-server
+      if (!origin || origin === 'null') {
+        return callback(null, true)
+      }
+
+      if (clientUrls.includes(origin)) {
+        return callback(null, true)
+      }
+
+      if (
+        process.env.NODE_ENV === 'development' &&
+        /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
+      ) {
+        return callback(null, true)
+      }
+
+      return callback(new Error(`CORS blocked: ${origin}`))
     },
+
     credentials: true,
+
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['set-cookie'],
-    maxAge: 86400,
-  }),
+
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+    ],
+  })
 )
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
